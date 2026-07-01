@@ -1,0 +1,9 @@
+# Copy this file to application-local.properties (same folder) and fill in real values.
+# application-local.properties is gitignored and must never be committed.
+
+spring.datasource.url=jdbc:postgresql://<host>:6543/postgres?prepareThreshold=0
+spring.datasource.username=postgres.<project-ref>
+spring.datasource.password=<db-password>
+
+souvenirpos.jwt.secret=<a-long-random-secret-value>
+souvenirpos.seed.owner-password=<initial-owner-account-password>

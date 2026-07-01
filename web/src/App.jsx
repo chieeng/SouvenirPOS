@@ -1,0 +1,29 @@
+import { Routes, Route } from 'react-router-dom'
+import ProtectedRoute from './components/ProtectedRoute'
+import LoginPage from './pages/LoginPage'
+import POSPage from './pages/POSPage'
+import ManageUsersPage from './pages/ManageUsersPage'
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <POSPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute requireRole="OWNER">
+            <ManageUsersPage />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  )
+}

@@ -1,0 +1,6 @@
+.claude/
+.DS_Store
+
+# Stray lock/temp artifacts left behind on the SMB network share by Maven/npm
+# file-locking (garbled dotfile names, e.g. ".<junk>0005000000<hex>")
+**/.[!a-zA-Z]*
