@@ -7,6 +7,10 @@ This doc is built for two things a professor typically does during a demo:
 - **B. Points at a block of code and asks "what's the logic here?"** → jump to Part B,
   find the block, and explain it in the plain-language walkthrough given.
 
+Every entry names the **exact file and line number** where the code lives, so you can open
+it and point to it directly (line numbers are as of this writing — if you edit a file they
+may shift by a few lines, but the file and function name will still be correct).
+
 Read it once out loud beforehand so the phrasing is already in your mouth.
 
 ---
@@ -15,12 +19,12 @@ Read it once out loud beforehand so the phrasing is already in your mouth.
 
 ## A1. Login screen (`web/src/pages/LoginPage.jsx`)
 
-| On screen | What it's for | Code behind it |
+| On screen | What it's for | Code behind it (file:line) |
 |---|---|---|
-| **Username field** | Identifies which account is signing in | `username` state, controlled input |
-| **Password field** | Proves the person owns that account | `password` state, `type="password"` hides it |
-| **Sign In button** | Sends the credentials to the server to be checked | `handleSubmit` → `login()` in `AuthContext` |
-| **Red error text** | Shown only when the server rejects the login | `error` state, set inside the `catch` block |
+| **Username field** | Identifies which account is signing in | `username` state — `LoginPage.jsx:9` |
+| **Password field** | Proves the person owns that account | `password` state, `type="password"` — `LoginPage.jsx:10` |
+| **Sign In button** | Sends the credentials to the server to be checked | `handleSubmit` → `login()` — `LoginPage.jsx:14` |
+| **Red error text** | Shown only when the server rejects the login | `error` state, set in `catch` — `LoginPage.jsx:22` |
 
 One-line summary to say: *"This page collects a username and password and asks the
 backend to verify them. If the backend says they're valid, it hands back a token and we
@@ -28,21 +32,23 @@ go to the POS; if not, we show an error."*
 
 ## A2. POS main screen (`web/src/pages/POSPage.jsx`) — the important one
 
-| On screen | What it's for | Code behind it |
+All in `web/src/pages/POSPage.jsx`:
+
+| On screen | What it's for | Code behind it (line) |
 |---|---|---|
-| **"SouvenirPOS" + name** (top-left) | Shows who is logged in | `user?.name` from `AuthContext` |
-| **Manage Users button** (top-right) | Owner-only shortcut to create accounts | only rendered `if user.role === 'OWNER'` |
-| **Logout button** | Ends the session on this device | `logout()` clears the saved token |
-| **Price panel** (big ₱ number) | Live display of the price being typed | shows `priceInput` formatted as pesos |
-| **Category chips** | Pick which kind of item this is (tap, no typing) | `CATEGORIES.map(...)`, active one highlighted |
-| **Numpad (7-8-9 … ⌫)** | Type the item's price like a calculator | each key calls `handleNumpadPress` |
-| **Quantity − / value / +** | Set how many of this item, with big tap targets | `adjustQuantity(-1)` / `adjustQuantity(+1)` |
-| **+ Add to Cart button** | Commits the current item into the sale | `handleAddToCart` |
-| **Sales Breakdown list** | Shows every item added so far, with a ✕ to remove | maps over `cart`; ✕ calls `handleRemoveLine` |
-| **Payment Received field** | How much cash the customer handed over | `payment` state, `handlePaymentChange` |
-| **Change line** | How much to give back = payment − total | `Math.max(change, 0)` |
-| **TOTAL (bottom bar)** | The amount the customer owes | `total`, summed from the cart |
-| **Checkout button** | Finalizes the sale | `handleCheckout` (disabled until payable) |
+| **"SouvenirPOS" + name** (top-left) | Shows who is logged in | `user?.name` — line 89 |
+| **Manage Users button** (top-right) | Owner-only shortcut to create accounts | rendered only if `role === 'OWNER'` — line 92–93 |
+| **Logout button** | Ends the session on this device | `onClick={logout}` — line 95 |
+| **Price panel** (big ₱ number) | Live display of the price being typed | `.price-panel` shows `priceInput` — line 101–103 |
+| **Category chips** | Pick which kind of item this is (tap, no typing) | `.category-chips`, `CATEGORIES.map(...)` — line 111 |
+| **Numpad (7-8-9 … ⌫)** | Type the item's price like a calculator | `.numpad`, each key → `handleNumpadPress` — line 124 |
+| **Quantity − / value / +** | Set how many of this item, with big tap targets | `.quantity-stepper` → `adjustQuantity` — line 134 |
+| **+ Add to Cart button** | Commits the current item into the sale | `handleAddToCart` — line 145 |
+| **Sales Breakdown list** | Shows every item added so far, with a ✕ to remove | `.cart-lines` maps `cart`; ✕ → `handleRemoveLine` — line 152, 163 |
+| **Payment Received field** | How much cash the customer handed over | `handlePaymentChange` — line 171–178 |
+| **Change line** | How much to give back = payment − total | `.cart-change`, `Math.max(change, 0)` — line 181 |
+| **TOTAL (bottom bar)** | The amount the customer owes | `.pos-footer-total`, `total` — line 191 |
+| **Checkout button** | Finalizes the sale | `handleCheckout` (disabled until payable) — line 196 |
 
 Say it as a flow: *"The cashier taps a category, types the price on the numpad, sets the
 quantity, and hits Add to Cart. That builds up the Sales Breakdown and the running Total.
@@ -50,11 +56,13 @@ Then they type the cash received, the system shows the change, and Checkout fini
 
 ## A3. Manage Users screen (`web/src/pages/ManageUsersPage.jsx`) — owner only
 
-| On screen | What it's for | Code behind it |
+All in `web/src/pages/ManageUsersPage.jsx`:
+
+| On screen | What it's for | Code behind it (line) |
 |---|---|---|
-| **Create Account form** | The owner makes a new cashier/owner login | `handleSubmit` → `POST /api/users` |
-| **Role dropdown** | Decides what the new account is allowed to do | `role` state (`CASHIER` / `OWNER`) |
-| **Existing Users table** | Shows all accounts already in the system | `GET /api/users`, mapped into rows |
+| **Create Account form** | The owner makes a new cashier/owner login | `handleSubmit` → `POST /api/users` — line 25, 30 |
+| **Role dropdown** | Decides what the new account is allowed to do | `role` state (`CASHIER` / `OWNER`) — line 12, 70 |
+| **Existing Users table** | Shows all accounts already in the system | `loadUsers()` `GET /api/users` — line 16 |
 
 Say it as: *"There is no public sign-up. Only an owner reaches this page, and only an owner
 can create accounts — this is where cashier logins come from."*
@@ -63,10 +71,22 @@ can create accounts — this is where cashier logins come from."*
 
 # PART B — "What is the logic of this code block?" (point at the code)
 
-Each entry: **where it is → what it does → why it's written that way.** The "why" is what
-usually earns the marks, because it shows you understand it, not just typed it.
+Each entry starts with a 📍 **location line** (file + line numbers), then: **what it does →
+why it's written that way.** The "why" is what usually earns the marks, because it shows you
+understand it, not just typed it.
 
-## B1. `POSPage.jsx` — the numpad handler
+**Quick file map** — which blocks live in which file:
+- `web/src/pages/POSPage.jsx` → B1, B2, B3, B4, B5, B6
+- `web/src/context/AuthContext.jsx` → B7
+- `web/src/api/client.js` → B8
+- `web/src/components/ProtectedRoute.jsx` → B9
+- `backend/.../controller/AuthController.java` → B10
+- `backend/.../security/JwtAuthFilter.java` → B11
+- `backend/.../controller/UserController.java` → B12
+- `backend/.../service/UserService.java` → B13
+
+## B1. The numpad handler
+📍 **`web/src/pages/POSPage.jsx`, lines 36–46** (`handleNumpadPress`)
 ```js
 function handleNumpadPress(key) {
   setCompletedMessage('')
@@ -93,7 +113,8 @@ function handleNumpadPress(key) {
 calculator, so it's stored as text (`priceInput`). A number couldn't hold a half-typed
 value like `"15."`. It's only converted to a real number with `parseFloat` when needed.
 
-## B2. `POSPage.jsx` — the quantity stepper
+## B2. The quantity stepper
+📍 **`web/src/pages/POSPage.jsx`, lines 55–57** (`adjustQuantity`)
 ```js
 function adjustQuantity(delta) {
   setQuantity((prev) => Math.max(1, prev + delta))
@@ -104,7 +125,8 @@ the current quantity. `Math.max(1, ...)` clamps the result so it can never drop 
 so one function handles both increasing, decreasing, **and** the "never go to zero" rule
 in a single line.
 
-## B3. `POSPage.jsx` — adding an item to the cart
+## B3. Adding an item to the cart
+📍 **`web/src/pages/POSPage.jsx`, lines 59–67** (`handleAddToCart`)
 ```js
 function handleAddToCart() {
   const price = parseFloat(priceInput)
@@ -126,7 +148,8 @@ function handleAddToCart() {
   line a unique id so we can find/remove it later.
 - Finally reset the price and quantity so the next item starts clean.
 
-## B4. `POSPage.jsx` — the running total
+## B4. The running total
+📍 **`web/src/pages/POSPage.jsx`, lines 28–31** (`total` / `useMemo`)
 ```js
 const total = useMemo(
   () => cart.reduce((sum, line) => sum + line.price * line.quantity, 0),
@@ -137,7 +160,8 @@ const total = useMemo(
 its quantity, and adds them all up starting from 0 — that's the total. `useMemo` means it
 only recalculates when the `cart` changes, not on every keystroke elsewhere on the screen.
 
-## B5. `POSPage.jsx` — sanitizing the payment field
+## B5. Sanitizing the payment field
+📍 **`web/src/pages/POSPage.jsx`, lines 48–53** (`handlePaymentChange`)
 ```js
 function handlePaymentChange(e) {
   const cleaned = e.target.value.replace(/[^0-9.]/g, '')
@@ -153,7 +177,8 @@ little up/down arrows we didn't want). Because it's text, we clean it ourselves:
 - If someone types more than one dot, `split('.')` produces 3+ pieces; we rejoin them into
   a single-decimal number so `parseFloat` won't choke.
 
-## B6. `POSPage.jsx` — checkout
+## B6. Checkout
+📍 **`web/src/pages/POSPage.jsx`, lines 73–82** (`handleCheckout`)
 ```js
 function handleCheckout() {
   if (cart.length === 0 || paymentAmount < total) {
@@ -170,7 +195,8 @@ customer. **Honest note if asked:** right now this only resets the screen — it
 yet save the sale to the database**. Saving sales (the `/api/sales` endpoint and the
 Sale/SaleItem tables) is the next feature to build.
 
-## B7. `AuthContext.jsx` — logging in
+## B7. Logging in (front-end side)
+📍 **`web/src/context/AuthContext.jsx`, lines 15–23** (`login`)
 ```js
 async function login(username, password) {
   const { data } = await client.post('/auth/login', { username, password })
@@ -187,7 +213,8 @@ doesn't log you out), save the user info, and put the user into React state so t
 updates. If the login fails, `client.post` throws, and the login page's `catch` shows the
 error.
 
-## B8. `client.js` — attaching the token to every request
+## B8. Attaching the token to every request
+📍 **`web/src/api/client.js`, lines 7–13** (axios request interceptor)
 ```js
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem('souvenirpos_token')
@@ -200,7 +227,8 @@ attaches it as an `Authorization: Bearer <token>` header. This is why no individ
 has to remember to send the token — it's added in one place for all requests. The backend
 reads this header to know who you are.
 
-## B9. `ProtectedRoute.jsx` — guarding pages
+## B9. Guarding pages (front-end route guard)
+📍 **`web/src/components/ProtectedRoute.jsx`, lines 7–14**
 ```js
 if (!user) return <Navigate to="/login" replace />
 if (requireRole && user.role !== requireRole) return <Navigate to="/" replace />
@@ -213,7 +241,8 @@ on the front-end. The real security is on the backend — even if someone bypass
 the browser, the server would still reject them with a 403. Never trust the client for
 security.
 
-## B10. Backend — issuing the token (`AuthController.login`)
+## B10. Issuing the token (backend login)
+📍 **`backend/src/main/java/edu/cit/erag/souvenirpos/controller/AuthController.java`, lines 33–46** (`login`)
 ```java
 authenticationManager.authenticate(
     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
@@ -226,7 +255,8 @@ and checks the password against the stored **hash** (never the plain password). 
 valid, generate a signed JWT that contains the username and role, and send it back. If
 it's invalid, an exception is thrown and the user gets a 401.
 
-## B11. Backend — checking the token on every request (`JwtAuthFilter`)
+## B11. Checking the token on every request (backend filter)
+📍 **`backend/src/main/java/edu/cit/erag/souvenirpos/security/JwtAuthFilter.java`, lines 34–52** (`doFilterInternal`)
 ```java
 String authHeader = request.getHeader("Authorization");
 if (authHeader == null || !authHeader.startsWith("Bearer ")) { filterChain.doFilter(request, response); return; }
@@ -245,7 +275,8 @@ endpoints will then reject it). If there is a token, it verifies the signature/e
 if valid, marks the request as coming from that logged-in user — which is what lets the
 role checks (`@PreAuthorize("hasRole('OWNER')")`) work.
 
-## B12. Backend — restricting account creation to owners (`UserController`)
+## B12. Restricting account creation to owners (backend)
+📍 **`backend/src/main/java/edu/cit/erag/souvenirpos/controller/UserController.java`, lines 23–28** (`createUser`)
 ```java
 @PreAuthorize("hasRole('OWNER')")
 @PostMapping
@@ -258,7 +289,8 @@ the method runs. A cashier calling this gets a 403 and the code never executes. 
 server-side enforcement of "only owners create accounts" — the real guard, backing up the
 UI-level hiding of the button.
 
-## B13. Backend — hashing passwords (`UserService.createUser`)
+## B13. Hashing passwords (backend)
+📍 **`backend/src/main/java/edu/cit/erag/souvenirpos/service/UserService.java`, lines 22–33** (`createUser`)
 ```java
 if (userRepository.existsByUsername(request.getUsername())) {
     throw new IllegalArgumentException("Username already exists");
