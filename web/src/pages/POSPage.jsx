@@ -1,29 +1,42 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import client from '../api/client'
 import './POSPage.css'
 
-const CATEGORIES = [
-  'Bracelets', 'RTW', 'T-Shirt', 'Assorted', 'Bag', 'Drinks', 'Hat',
-  'Lanyard', 'Payong', 'Ref Magnet', 'Rosary', 'Sarong', 'Shades',
-  'Toys', 'Tsinelas', 'Tubig',
-]
 const NUMPAD_KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫']
 
 function formatPeso(amount) {
-  return `₱${amount.toFixed(2)}`
+  return `₱${Number(amount).toFixed(2)}`
 }
 
 export default function POSPage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  const [category, setCategory] = useState(CATEGORIES[0])
+  const [categories, setCategories] = useState([])
+  const [category, setCategory] = useState(null)
   const [priceInput, setPriceInput] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [cart, setCart] = useState([])
   const [payment, setPayment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
   const [completedMessage, setCompletedMessage] = useState('')
+
+  // Load the owner-managed category list from the backend (FR-005).
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const { data } = await client.get('/categories')
+        setCategories(data)
+        setCategory((prev) => prev ?? data[0] ?? null)
+      } catch (err) {
+        setError(err.response?.data?.message || 'Could not load categories')
+      }
+    }
+    loadCategories()
+  }, [])
 
   const total = useMemo(
     () => cart.reduce((sum, line) => sum + line.price * line.quantity, 0),
@@ -58,7 +71,7 @@ export default function POSPage() {
 
   function handleAddToCart() {
     const price = parseFloat(priceInput)
-    if (!price || price <= 0 || quantity < 1) {
+    if (!category || !price || price <= 0 || quantity < 1) {
       return
     }
     setCart((prev) => [...prev, { id: Date.now(), category, price, quantity }])
@@ -70,15 +83,32 @@ export default function POSPage() {
     setCart((prev) => prev.filter((line) => line.id !== id))
   }
 
-  function handleCheckout() {
-    if (cart.length === 0 || paymentAmount < total) {
+  async function handleCheckout() {
+    if (cart.length === 0 || paymentAmount < total || submitting) {
       return
     }
-    setCompletedMessage(
-      `Sale completed. Total ${formatPeso(total)}, Change ${formatPeso(change)}`,
-    )
-    setCart([])
-    setPayment('')
+    setSubmitting(true)
+    setError('')
+    try {
+      // The backend recomputes totals/change and persists the sale (FR-008/009/011).
+      const { data } = await client.post('/sales', {
+        items: cart.map((line) => ({
+          categoryId: line.category.id,
+          quantity: line.quantity,
+          unitPrice: line.price,
+        })),
+        paymentAmount,
+      })
+      setCompletedMessage(
+        `Sale #${data.id} completed. Total ${formatPeso(data.totalAmount)}, Change ${formatPeso(data.changeAmount)}`,
+      )
+      setCart([])
+      setPayment('')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not save the sale')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -109,13 +139,14 @@ export default function POSPage() {
               <span className="category-hint">tap to select</span>
             </div>
             <div className="category-chips">
-              {CATEGORIES.map((c) => (
+              {categories.length === 0 && <span className="category-hint">Loading categories…</span>}
+              {categories.map((c) => (
                 <button
-                  key={c}
-                  className={`chip ${category === c ? 'chip-active' : ''}`}
+                  key={c.id}
+                  className={`chip ${category?.id === c.id ? 'chip-active' : ''}`}
                   onClick={() => setCategory(c)}
                 >
-                  {c}
+                  {c.name}
                 </button>
               ))}
             </div>
@@ -154,7 +185,7 @@ export default function POSPage() {
             {cart.map((line) => (
               <div key={line.id} className="cart-line">
                 <div className="cart-line-info">
-                  <strong>{line.category}</strong>
+                  <strong>{line.category.name}</strong>
                   <span>{formatPeso(line.price)} · x{line.quantity}</span>
                 </div>
                 <div className="cart-line-price">
@@ -183,6 +214,7 @@ export default function POSPage() {
             <span>{formatPeso(Math.max(change, 0))}</span>
           </div>
 
+          {error && <div className="cart-error">{error}</div>}
           {completedMessage && <div className="cart-success">{completedMessage}</div>}
         </section>
       </main>
@@ -195,9 +227,9 @@ export default function POSPage() {
         <button
           className="pos-checkout-btn"
           onClick={handleCheckout}
-          disabled={cart.length === 0 || paymentAmount < total}
+          disabled={cart.length === 0 || paymentAmount < total || submitting}
         >
-          Checkout
+          {submitting ? 'Saving…' : 'Checkout'}
         </button>
       </footer>
     </div>

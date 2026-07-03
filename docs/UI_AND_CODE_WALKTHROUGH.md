@@ -39,20 +39,27 @@ All in `web/src/pages/POSPage.jsx`:
 | **"SouvenirPOS" + name** (top-left) | Shows who is logged in | `user?.name` — line 89 |
 | **Manage Users button** (top-right) | Owner-only shortcut to create accounts | rendered only if `role === 'OWNER'` — line 92–93 |
 | **Logout button** | Ends the session on this device | `onClick={logout}` — line 95 |
-| **Price panel** (big ₱ number) | Live display of the price being typed | `.price-panel` shows `priceInput` — line 101–103 |
-| **Category chips** | Pick which kind of item this is (tap, no typing) | `.category-chips`, `CATEGORIES.map(...)` — line 111 |
-| **Numpad (7-8-9 … ⌫)** | Type the item's price like a calculator | `.numpad`, each key → `handleNumpadPress` — line 124 |
-| **Quantity − / value / +** | Set how many of this item, with big tap targets | `.quantity-stepper` → `adjustQuantity` — line 134 |
-| **+ Add to Cart button** | Commits the current item into the sale | `handleAddToCart` — line 145 |
-| **Sales Breakdown list** | Shows every item added so far, with a ✕ to remove | `.cart-lines` maps `cart`; ✕ → `handleRemoveLine` — line 152, 163 |
-| **Payment Received field** | How much cash the customer handed over | `handlePaymentChange` — line 171–178 |
-| **Change line** | How much to give back = payment − total | `.cart-change`, `Math.max(change, 0)` — line 181 |
-| **TOTAL (bottom bar)** | The amount the customer owes | `.pos-footer-total`, `total` — line 191 |
-| **Checkout button** | Finalizes the sale | `handleCheckout` (disabled until payable) — line 196 |
+| **Price panel** (big ₱ number) | Live display of the price being typed | `.price-panel` shows `priceInput` |
+| **Category chips** | Pick which kind of item this is (tap, no typing) | `.category-chips` maps `categories` **fetched from the backend** (`GET /api/categories`) — `useEffect`, line 28 |
+| **Numpad (7-8-9 … ⌫)** | Type the item's price like a calculator | `.numpad`, each key → `handleNumpadPress` |
+| **Quantity − / value / +** | Set how many of this item, with big tap targets | `.quantity-stepper` → `adjustQuantity` |
+| **+ Add to Cart button** | Commits the current item into the sale | `handleAddToCart` |
+| **Sales Breakdown list** | Shows every item added so far, with a ✕ to remove | `.cart-lines` maps `cart`; ✕ → `handleRemoveLine` |
+| **Payment Received field** | How much cash the customer handed over | `handlePaymentChange` |
+| **Change line** | How much to give back = payment − total | `.cart-change`, `Math.max(change, 0)` |
+| **Red error line** | Shown if categories fail to load or a sale fails to save | `error` state, `.cart-error` |
+| **Green success line** | Confirms the saved sale, with its server-assigned number, total, and change | `completedMessage`, `.cart-success` |
+| **TOTAL (bottom bar)** | The amount the customer owes | `.pos-footer-total`, `total` |
+| **Checkout button** | Saves the sale to the database, then shows the receipt | `handleCheckout` → `POST /api/sales` (shows "Saving…", disabled until payable) |
 
-Say it as a flow: *"The cashier taps a category, types the price on the numpad, sets the
-quantity, and hits Add to Cart. That builds up the Sales Breakdown and the running Total.
-Then they type the cash received, the system shows the change, and Checkout finishes it."*
+Say it as a flow: *"The cashier taps a category (loaded from the backend), types the price
+on the numpad, sets the quantity, and hits Add to Cart. That builds up the Sales Breakdown
+and the running Total. Then they type the cash received, the system shows the change, and
+Checkout sends the whole sale to the backend, which saves it and returns the receipt."*
+
+> Note: the price/quantity here compute a *preview* total for the cashier. The **authoritative**
+> total, change, and validation are recomputed on the server when the sale is saved — the
+> client numbers are never trusted (see B6 and B14).
 
 ## A3. Manage Users screen (`web/src/pages/ManageUsersPage.jsx`) — owner only
 
@@ -76,7 +83,7 @@ why it's written that way.** The "why" is what usually earns the marks, because 
 understand it, not just typed it.
 
 **Quick file map** — which blocks live in which file:
-- `web/src/pages/POSPage.jsx` → B1, B2, B3, B4, B5, B6
+- `web/src/pages/POSPage.jsx` → B1, B2, B3, B4, B5, B6, B6b
 - `web/src/context/AuthContext.jsx` → B7
 - `web/src/api/client.js` → B8
 - `web/src/components/ProtectedRoute.jsx` → B9
@@ -84,6 +91,8 @@ understand it, not just typed it.
 - `backend/.../security/JwtAuthFilter.java` → B11
 - `backend/.../controller/UserController.java` → B12
 - `backend/.../service/UserService.java` → B13
+- `backend/.../service/SaleService.java` → B14 (the sale-saving logic)
+- `backend/.../controller/CategoryController.java` → B15
 
 ## B1. The numpad handler
 📍 **`web/src/pages/POSPage.jsx`, lines 36–46** (`handleNumpadPress`)
@@ -177,23 +186,70 @@ little up/down arrows we didn't want). Because it's text, we clean it ourselves:
 - If someone types more than one dot, `split('.')` produces 3+ pieces; we rejoin them into
   a single-decimal number so `parseFloat` won't choke.
 
-## B6. Checkout
-📍 **`web/src/pages/POSPage.jsx`, lines 73–82** (`handleCheckout`)
+## B6. Checkout — now saves to the database
+📍 **`web/src/pages/POSPage.jsx`, `handleCheckout`**
 ```js
-function handleCheckout() {
-  if (cart.length === 0 || paymentAmount < total) {
-    return
+async function handleCheckout() {
+  if (cart.length === 0 || paymentAmount < total || submitting) return
+  setSubmitting(true)
+  setError('')
+  try {
+    const { data } = await client.post('/sales', {
+      items: cart.map((line) => ({
+        categoryId: line.category.id,
+        quantity: line.quantity,
+        unitPrice: line.price,
+      })),
+      paymentAmount,
+    })
+    setCompletedMessage(
+      `Sale #${data.id} completed. Total ${formatPeso(data.totalAmount)}, Change ${formatPeso(data.changeAmount)}`,
+    )
+    setCart([])
+    setPayment('')
+  } catch (err) {
+    setError(err.response?.data?.message || 'Could not save the sale')
+  } finally {
+    setSubmitting(false)
   }
-  setCompletedMessage(`Sale completed. Total ${formatPeso(total)}, Change ${formatPeso(change)}`)
-  setCart([])
-  setPayment('')
 }
 ```
-**Logic:** Refuse to check out if the cart is empty or the cash given is less than the
-total. Otherwise show a success message, then empty the cart and payment for the next
-customer. **Honest note if asked:** right now this only resets the screen — it does **not
-yet save the sale to the database**. Saving sales (the `/api/sales` endpoint and the
-Sale/SaleItem tables) is the next feature to build.
+**Logic:** Refuse to check out if the cart is empty, the cash given is less than the total,
+or a save is already in progress. Otherwise it turns each cart line into
+`{ categoryId, quantity, unitPrice }` and **POSTs the whole sale to `/api/sales`**. The
+backend saves it and returns the finished sale, so the success message uses the **server's**
+`totalAmount` and `changeAmount` and the real `id` it assigned — proof it was persisted. On
+failure it shows the server's error message (e.g. "Payment amount must be greater than or
+equal to the total"). `finally` always clears the "Saving…" state.
+
+**Why send `unitPrice` and let the server recompute the total?** Two reasons: (1) the server
+must not trust a total typed on the client — someone could tamper with it; (2) the price is
+captured per line at the moment of sale (SRS BR-005), so it has to travel with each item.
+The screen's own `total` is just a live preview for the cashier.
+
+## B6b. Loading the category list from the backend
+📍 **`web/src/pages/POSPage.jsx`, `useEffect` (around line 28)**
+```js
+useEffect(() => {
+  async function loadCategories() {
+    try {
+      const { data } = await client.get('/categories')
+      setCategories(data)
+      setCategory((prev) => prev ?? data[0] ?? null)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not load categories')
+    }
+  }
+  loadCategories()
+}, [])
+```
+**Logic:** The `[]` dependency means this runs **once**, right after the page first appears.
+It asks the backend for the owner-managed category list (`GET /api/categories`) and stores
+it. `setCategory((prev) => prev ?? data[0])` pre-selects the first category **only if one
+isn't already chosen**, so a re-render doesn't reset the cashier's pick. **Why fetch instead
+of a hardcoded list?** Categories are owned by the shop and managed by the owner (SRS FR-019 /
+BR-006); the cashier's screen just reflects whatever is currently in the database, shared
+with the mobile app.
 
 ## B7. Logging in (front-end side)
 📍 **`web/src/context/AuthContext.jsx`, lines 15–23** (`login`)
@@ -304,6 +360,63 @@ return userRepository.save(user);
 stores the real password, only a scrambled one-way version. Even we can't reverse it; at
 login we can only check whether a submitted password produces the same hash.
 
+## B14. Saving a sale — the trust boundary (backend)
+📍 **`backend/src/main/java/edu/cit/erag/souvenirpos/service/SaleService.java`** (`createSale`)
+```java
+User cashier = currentUser();                       // from the JWT, not the request body
+Sale sale = new Sale();
+sale.setCashier(cashier);
+sale.setSaleDateTime(LocalDateTime.now());
+
+BigDecimal total = BigDecimal.ZERO;
+for (SaleItemRequest line : request.getItems()) {
+    Category category = categoryRepository.findById(line.getCategoryId())
+            .orElseThrow(() -> new IllegalArgumentException("Category not found: ..."));
+    BigDecimal subtotal = line.getUnitPrice().multiply(BigDecimal.valueOf(line.getQuantity()));
+    total = total.add(subtotal);
+    sale.addItem(new SaleItem(category, line.getQuantity(), line.getUnitPrice(), subtotal));
+}
+if (request.getPaymentAmount().compareTo(total) < 0)
+    throw new IllegalArgumentException("Payment amount must be greater than or equal to the total");
+
+sale.setTotalAmount(total);
+sale.setPaymentAmount(request.getPaymentAmount());
+sale.setChangeAmount(request.getPaymentAmount().subtract(total));
+return saleRepository.save(sale);
+```
+**Logic:** This is the method behind `POST /api/sales`, and it's the important one to be
+able to explain.
+- **Who made the sale comes from the token, not the request.** `currentUser()` reads the
+  logged-in username out of the security context (put there by the JWT filter, B11) and looks
+  up that `User`. The client can't claim to be someone else (SRS BR-004).
+- **The server recomputes every number.** It walks the line items, multiplies price × quantity
+  for each subtotal, and sums them for the total — it never uses a total sent by the client.
+  Then it checks payment ≥ total (BR-003) and computes change itself.
+- **It's saved as one unit.** `@Transactional` + the `Sale`→`SaleItem` cascade means the sale
+  and all its lines are written together; if anything fails, nothing is half-saved (BR-002:
+  a sale always has its items).
+- **`BigDecimal`, not `double`,** because money must not have floating-point rounding errors
+  (BR-007, two-decimal peso).
+
+**One line to say:** *"The client proposes the items and the cash; the server decides the
+totals, the change, who the cashier is, and whether it's even allowed — then persists it."*
+
+## B15. Serving and guarding the category list (backend)
+📍 **`backend/src/main/java/edu/cit/erag/souvenirpos/controller/CategoryController.java`**
+```java
+@GetMapping
+public List<CategoryResponse> listCategories() { ... }   // any logged-in user
+
+@PreAuthorize("hasRole('OWNER')")
+@PostMapping
+public CategoryResponse createCategory(@Valid @RequestBody CategoryCreateRequest request) { ... }
+```
+**Logic:** Any authenticated user (including a cashier) can **read** the category list — the
+POS screen needs it to show the chips. But **adding** a category is wrapped in
+`@PreAuthorize("hasRole('OWNER')")`, so only an owner can grow the list (SRS FR-019 / BR-006).
+Same pattern as user creation (B12): read is open to staff, write is owner-only, enforced on
+the server. The initial categories are inserted once by the `DataSeeder` on first startup.
+
 ---
 
 # One-sentence answers to keep in your back pocket
@@ -314,3 +427,7 @@ login we can only check whether a submitted password produces the same hash.
   401, wrong-role requests get 403.
 - **"Where's the database logic?"** — Only in the backend. The React app never touches the
   database; it only calls REST endpoints.
+- **"Does the mobile app work differently?"** — No. The Android app (`mobile/`, Kotlin +
+  Jetpack Compose) hits the **same** endpoints — `POST /api/auth/login`, `GET /api/categories`,
+  `POST /api/sales` — with the same JWT. A sale rung up on the phone and one rung up on the web
+  land in the same Supabase tables, because both go through this one backend.

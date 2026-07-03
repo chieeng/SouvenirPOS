@@ -1,0 +1,5 @@
+<resources>
+    <!-- Compose supplies the real theming; this base theme only styles the window
+         so it works without pulling in the Material Components XML library. -->
+    <style name="Theme.SouvenirPOS" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
