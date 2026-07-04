@@ -5,6 +5,8 @@ import edu.cit.erag.souvenirpos.data.model.LoginRequest
 import edu.cit.erag.souvenirpos.data.model.LoginResponse
 import edu.cit.erag.souvenirpos.data.model.SaleCreateRequest
 import edu.cit.erag.souvenirpos.data.model.SaleResponse
+import edu.cit.erag.souvenirpos.data.model.UserCreateRequest
+import edu.cit.erag.souvenirpos.data.model.UserResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -20,4 +22,11 @@ interface ApiService {
 
     @POST("sales")
     suspend fun createSale(@Body body: SaleCreateRequest): SaleResponse
+
+    // Owner-only on the backend (@PreAuthorize("hasRole('OWNER')")); a cashier token gets a 403.
+    @GET("users")
+    suspend fun users(): List<UserResponse>
+
+    @POST("users")
+    suspend fun createUser(@Body body: UserCreateRequest): UserResponse
 }

@@ -7,10 +7,12 @@ import androidx.navigation.compose.rememberNavController
 import edu.cit.erag.souvenirpos.di.ServiceLocator
 import edu.cit.erag.souvenirpos.ui.login.LoginScreen
 import edu.cit.erag.souvenirpos.ui.pos.PosScreen
+import edu.cit.erag.souvenirpos.ui.users.ManageUsersScreen
 
 object Routes {
     const val LOGIN = "login"
     const val POS = "pos"
+    const val USERS = "users"
 }
 
 @Composable
@@ -35,7 +37,11 @@ fun AppNavigation() {
                         popUpTo(Routes.POS) { inclusive = true }
                     }
                 },
+                onManageUsers = { navController.navigate(Routes.USERS) },
             )
+        }
+        composable(Routes.USERS) {
+            ManageUsersScreen(onBack = { navController.popBackStack() })
         }
     }
 }

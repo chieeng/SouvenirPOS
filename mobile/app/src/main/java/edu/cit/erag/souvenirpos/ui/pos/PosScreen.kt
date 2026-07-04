@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -54,6 +55,7 @@ private val NUMPAD_ROWS = listOf(
 @Composable
 fun PosScreen(
     onLoggedOut: () -> Unit,
+    onManageUsers: () -> Unit,
     viewModel: PosViewModel = viewModel(),
 ) {
     Scaffold(
@@ -69,6 +71,11 @@ fun PosScreen(
                     }
                 },
                 actions = {
+                    if (viewModel.isOwner) {
+                        IconButton(onClick = onManageUsers) {
+                            Icon(Icons.Filled.ManageAccounts, contentDescription = "Manage users")
+                        }
+                    }
                     IconButton(onClick = { viewModel.logout(onLoggedOut) }) {
                         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Log out")
                     }

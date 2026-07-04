@@ -49,6 +49,9 @@ class PosViewModel : ViewModel() {
 
     val userName: String get() = ServiceLocator.tokenStore.name() ?: "Cashier"
 
+    // Owner-only actions (e.g. Manage Users) are hidden for cashiers; the backend enforces it too.
+    val isOwner: Boolean get() = ServiceLocator.tokenStore.role() == "OWNER"
+
     val total: Double get() = cart.sumOf { it.subtotal }
     val paymentAmount: Double get() = payment.toDoubleOrNull() ?: 0.0
     val change: Double get() = (paymentAmount - total).coerceAtLeast(0.0)

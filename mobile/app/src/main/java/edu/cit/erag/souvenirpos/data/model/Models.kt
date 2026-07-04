@@ -21,6 +21,20 @@ data class Category(
     val name: String,
 )
 
+data class UserResponse(
+    val id: Long,
+    val name: String,
+    val username: String,
+    val role: String,
+)
+
+data class UserCreateRequest(
+    val name: String,
+    val username: String,
+    val password: String,
+    val role: String,
+)
+
 data class SaleLineRequest(
     val categoryId: Long,
     val quantity: Int,
