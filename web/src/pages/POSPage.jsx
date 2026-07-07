@@ -119,6 +119,7 @@ export default function POSPage() {
           <span className="pos-header-name">{user?.name}</span>
         </div>
         <div className="pos-header-actions">
+          <button onClick={() => navigate('/history')}>Sales History</button>
           {user?.role === 'OWNER' && (
             <button onClick={() => navigate('/users')}>Manage Users</button>
           )}

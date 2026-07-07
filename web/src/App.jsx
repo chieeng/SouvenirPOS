@@ -3,6 +3,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import POSPage from './pages/POSPage'
 import ManageUsersPage from './pages/ManageUsersPage'
+import SalesHistoryPage from './pages/SalesHistoryPage'
 
 export default function App() {
   return (
@@ -13,6 +14,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <POSPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <SalesHistoryPage />
           </ProtectedRoute>
         }
       />
