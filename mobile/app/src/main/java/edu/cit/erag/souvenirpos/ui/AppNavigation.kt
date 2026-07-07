@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import edu.cit.erag.souvenirpos.di.ServiceLocator
+import edu.cit.erag.souvenirpos.ui.history.SalesHistoryScreen
 import edu.cit.erag.souvenirpos.ui.login.LoginScreen
 import edu.cit.erag.souvenirpos.ui.pos.PosScreen
 import edu.cit.erag.souvenirpos.ui.users.ManageUsersScreen
@@ -13,6 +14,7 @@ object Routes {
     const val LOGIN = "login"
     const val POS = "pos"
     const val USERS = "users"
+    const val HISTORY = "history"
 }
 
 @Composable
@@ -38,10 +40,14 @@ fun AppNavigation() {
                     }
                 },
                 onManageUsers = { navController.navigate(Routes.USERS) },
+                onViewHistory = { navController.navigate(Routes.HISTORY) },
             )
         }
         composable(Routes.USERS) {
             ManageUsersScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.HISTORY) {
+            SalesHistoryScreen(onBack = { navController.popBackStack() })
         }
     }
 }
