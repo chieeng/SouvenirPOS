@@ -12,4 +12,7 @@ class PosRepository(private val api: ApiService) {
 
     /** Records a completed sale (POST /api/sales); the backend computes totals/change. */
     suspend fun createSale(request: SaleCreateRequest): SaleResponse = api.createSale(request)
+
+    /** Sales history, newest first (GET /api/sales); an ISO date filters to one day. */
+    suspend fun listSales(date: String? = null): List<SaleResponse> = api.sales(date)
 }
