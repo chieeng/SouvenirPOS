@@ -1,8 +1,8 @@
-package edu.cit.erag.souvenirpos.controller;
+package edu.cit.erag.souvenirpos.feature.sale;
 
-import edu.cit.erag.souvenirpos.dto.SaleCreateRequest;
-import edu.cit.erag.souvenirpos.dto.SaleResponse;
-import edu.cit.erag.souvenirpos.service.SaleService;
+import edu.cit.erag.souvenirpos.feature.sale.SaleCreateRequest;
+import edu.cit.erag.souvenirpos.feature.sale.SaleResponse;
+import edu.cit.erag.souvenirpos.feature.sale.SaleService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;

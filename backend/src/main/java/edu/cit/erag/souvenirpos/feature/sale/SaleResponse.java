@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.dto;
+package edu.cit.erag.souvenirpos.feature.sale;
 
 import edu.cit.erag.souvenirpos.shared.domain.Sale;
 

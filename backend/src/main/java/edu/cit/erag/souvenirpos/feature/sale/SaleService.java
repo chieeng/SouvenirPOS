@@ -1,13 +1,13 @@
-package edu.cit.erag.souvenirpos.service;
+package edu.cit.erag.souvenirpos.feature.sale;
 
-import edu.cit.erag.souvenirpos.dto.SaleCreateRequest;
-import edu.cit.erag.souvenirpos.dto.SaleItemRequest;
+import edu.cit.erag.souvenirpos.feature.sale.SaleCreateRequest;
+import edu.cit.erag.souvenirpos.feature.sale.SaleItemRequest;
 import edu.cit.erag.souvenirpos.shared.domain.Category;
 import edu.cit.erag.souvenirpos.shared.domain.Sale;
 import edu.cit.erag.souvenirpos.shared.domain.SaleItem;
 import edu.cit.erag.souvenirpos.shared.domain.User;
 import edu.cit.erag.souvenirpos.feature.category.CategoryRepository;
-import edu.cit.erag.souvenirpos.repository.SaleRepository;
+import edu.cit.erag.souvenirpos.feature.sale.SaleRepository;
 import edu.cit.erag.souvenirpos.feature.user.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

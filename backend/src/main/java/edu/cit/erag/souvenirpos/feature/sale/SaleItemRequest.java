@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.dto;
+package edu.cit.erag.souvenirpos.feature.sale;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;

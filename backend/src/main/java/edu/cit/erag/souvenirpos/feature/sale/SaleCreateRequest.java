@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.dto;
+package edu.cit.erag.souvenirpos.feature.sale;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
