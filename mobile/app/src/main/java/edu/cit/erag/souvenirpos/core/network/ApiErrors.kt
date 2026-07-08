@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.data.network
+package edu.cit.erag.souvenirpos.core.network
 
 import com.google.gson.Gson
 import retrofit2.HttpException

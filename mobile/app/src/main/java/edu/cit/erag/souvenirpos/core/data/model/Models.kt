@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.data.model
+package edu.cit.erag.souvenirpos.core.data.model
 
 // Request/response payloads that mirror the Spring Boot DTOs. Field names must match
 // the backend JSON exactly so Gson can (de)serialize them.

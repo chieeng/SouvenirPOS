@@ -1,10 +1,10 @@
-package edu.cit.erag.souvenirpos.di
+package edu.cit.erag.souvenirpos.core.di
 
 import android.content.Context
 import edu.cit.erag.souvenirpos.BuildConfig
-import edu.cit.erag.souvenirpos.data.TokenStore
-import edu.cit.erag.souvenirpos.data.network.ApiService
-import edu.cit.erag.souvenirpos.data.network.AuthInterceptor
+import edu.cit.erag.souvenirpos.core.data.TokenStore
+import edu.cit.erag.souvenirpos.core.network.ApiService
+import edu.cit.erag.souvenirpos.core.network.AuthInterceptor
 import edu.cit.erag.souvenirpos.data.repository.AuthRepository
 import edu.cit.erag.souvenirpos.data.repository.PosRepository
 import edu.cit.erag.souvenirpos.data.repository.UserRepository

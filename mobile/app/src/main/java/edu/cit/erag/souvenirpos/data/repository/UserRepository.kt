@@ -1,8 +1,8 @@
 package edu.cit.erag.souvenirpos.data.repository
 
-import edu.cit.erag.souvenirpos.data.model.UserCreateRequest
-import edu.cit.erag.souvenirpos.data.model.UserResponse
-import edu.cit.erag.souvenirpos.data.network.ApiService
+import edu.cit.erag.souvenirpos.core.data.model.UserCreateRequest
+import edu.cit.erag.souvenirpos.core.data.model.UserResponse
+import edu.cit.erag.souvenirpos.core.network.ApiService
 
 class UserRepository(private val api: ApiService) {
 

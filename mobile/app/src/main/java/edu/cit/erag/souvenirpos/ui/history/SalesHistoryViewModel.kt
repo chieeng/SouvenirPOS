@@ -5,9 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import edu.cit.erag.souvenirpos.data.model.SaleResponse
-import edu.cit.erag.souvenirpos.data.network.userMessage
-import edu.cit.erag.souvenirpos.di.ServiceLocator
+import edu.cit.erag.souvenirpos.core.data.model.SaleResponse
+import edu.cit.erag.souvenirpos.core.network.userMessage
+import edu.cit.erag.souvenirpos.core.di.ServiceLocator
 import kotlinx.coroutines.launch
 
 class SalesHistoryViewModel : ViewModel() {

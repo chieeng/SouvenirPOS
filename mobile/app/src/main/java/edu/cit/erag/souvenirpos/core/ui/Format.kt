@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.ui
+package edu.cit.erag.souvenirpos.core.ui
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

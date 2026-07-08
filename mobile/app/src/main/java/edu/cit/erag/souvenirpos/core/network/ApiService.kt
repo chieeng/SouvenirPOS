@@ -1,12 +1,12 @@
-package edu.cit.erag.souvenirpos.data.network
+package edu.cit.erag.souvenirpos.core.network
 
-import edu.cit.erag.souvenirpos.data.model.Category
-import edu.cit.erag.souvenirpos.data.model.LoginRequest
-import edu.cit.erag.souvenirpos.data.model.LoginResponse
-import edu.cit.erag.souvenirpos.data.model.SaleCreateRequest
-import edu.cit.erag.souvenirpos.data.model.SaleResponse
-import edu.cit.erag.souvenirpos.data.model.UserCreateRequest
-import edu.cit.erag.souvenirpos.data.model.UserResponse
+import edu.cit.erag.souvenirpos.core.data.model.Category
+import edu.cit.erag.souvenirpos.core.data.model.LoginRequest
+import edu.cit.erag.souvenirpos.core.data.model.LoginResponse
+import edu.cit.erag.souvenirpos.core.data.model.SaleCreateRequest
+import edu.cit.erag.souvenirpos.core.data.model.SaleResponse
+import edu.cit.erag.souvenirpos.core.data.model.UserCreateRequest
+import edu.cit.erag.souvenirpos.core.data.model.UserResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST

@@ -35,7 +35,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.viewmodel.compose.viewModel
-import edu.cit.erag.souvenirpos.data.model.UserResponse
+import edu.cit.erag.souvenirpos.core.data.model.UserResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

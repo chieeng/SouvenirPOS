@@ -1,9 +1,9 @@
 package edu.cit.erag.souvenirpos.data.repository
 
-import edu.cit.erag.souvenirpos.data.model.Category
-import edu.cit.erag.souvenirpos.data.model.SaleCreateRequest
-import edu.cit.erag.souvenirpos.data.model.SaleResponse
-import edu.cit.erag.souvenirpos.data.network.ApiService
+import edu.cit.erag.souvenirpos.core.data.model.Category
+import edu.cit.erag.souvenirpos.core.data.model.SaleCreateRequest
+import edu.cit.erag.souvenirpos.core.data.model.SaleResponse
+import edu.cit.erag.souvenirpos.core.network.ApiService
 
 class PosRepository(private val api: ApiService) {
 

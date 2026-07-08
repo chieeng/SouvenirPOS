@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import edu.cit.erag.souvenirpos.ui.AppNavigation
-import edu.cit.erag.souvenirpos.ui.theme.SouvenirPosTheme
+import edu.cit.erag.souvenirpos.core.ui.AppNavigation
+import edu.cit.erag.souvenirpos.core.ui.theme.SouvenirPosTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

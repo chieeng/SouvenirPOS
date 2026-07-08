@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.viewmodel.compose.viewModel
-import edu.cit.erag.souvenirpos.ui.peso
+import edu.cit.erag.souvenirpos.core.ui.peso
 
 private val NUMPAD_ROWS = listOf(
     listOf("7", "8", "9"),
@@ -308,7 +308,7 @@ private fun AmountRow(label: String, value: String, emphasize: Boolean = false) 
 
 @Composable
 private fun ReceiptDialog(
-    receipt: edu.cit.erag.souvenirpos.data.model.SaleResponse,
+    receipt: edu.cit.erag.souvenirpos.core.data.model.SaleResponse,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(

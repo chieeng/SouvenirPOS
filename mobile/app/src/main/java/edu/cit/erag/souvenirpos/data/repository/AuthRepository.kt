@@ -1,9 +1,9 @@
 package edu.cit.erag.souvenirpos.data.repository
 
-import edu.cit.erag.souvenirpos.data.TokenStore
-import edu.cit.erag.souvenirpos.data.model.LoginRequest
-import edu.cit.erag.souvenirpos.data.model.LoginResponse
-import edu.cit.erag.souvenirpos.data.network.ApiService
+import edu.cit.erag.souvenirpos.core.data.TokenStore
+import edu.cit.erag.souvenirpos.core.data.model.LoginRequest
+import edu.cit.erag.souvenirpos.core.data.model.LoginResponse
+import edu.cit.erag.souvenirpos.core.network.ApiService
 
 class AuthRepository(
     private val api: ApiService,

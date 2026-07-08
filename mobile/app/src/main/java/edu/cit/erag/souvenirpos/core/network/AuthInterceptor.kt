@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.data.network
+package edu.cit.erag.souvenirpos.core.network
 
 import okhttp3.Interceptor
 import okhttp3.Response

@@ -1,7 +1,7 @@
 package edu.cit.erag.souvenirpos
 
 import android.app.Application
-import edu.cit.erag.souvenirpos.di.ServiceLocator
+import edu.cit.erag.souvenirpos.core.di.ServiceLocator
 
 class SouvenirPosApp : Application() {
     override fun onCreate() {

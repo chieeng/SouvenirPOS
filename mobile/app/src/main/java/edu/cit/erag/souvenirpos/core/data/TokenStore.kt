@@ -1,7 +1,7 @@
-package edu.cit.erag.souvenirpos.data
+package edu.cit.erag.souvenirpos.core.data
 
 import android.content.Context
-import edu.cit.erag.souvenirpos.data.model.LoginResponse
+import edu.cit.erag.souvenirpos.core.data.model.LoginResponse
 
 /**
  * Persists the JWT and basic user info in SharedPreferences so the session survives

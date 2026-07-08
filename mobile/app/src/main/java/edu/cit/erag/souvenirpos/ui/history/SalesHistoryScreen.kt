@@ -42,9 +42,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import edu.cit.erag.souvenirpos.data.model.SaleResponse
-import edu.cit.erag.souvenirpos.ui.formatSaleDateTime
-import edu.cit.erag.souvenirpos.ui.peso
+import edu.cit.erag.souvenirpos.core.data.model.SaleResponse
+import edu.cit.erag.souvenirpos.core.ui.formatSaleDateTime
+import edu.cit.erag.souvenirpos.core.ui.peso
 import java.time.Instant
 import java.time.ZoneOffset
 

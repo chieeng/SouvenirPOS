@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.ui.theme
+package edu.cit.erag.souvenirpos.core.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
