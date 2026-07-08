@@ -1,8 +1,8 @@
-package edu.cit.erag.souvenirpos.config;
+package edu.cit.erag.souvenirpos.shared.config;
 
-import edu.cit.erag.souvenirpos.entity.Category;
-import edu.cit.erag.souvenirpos.entity.Role;
-import edu.cit.erag.souvenirpos.entity.User;
+import edu.cit.erag.souvenirpos.shared.domain.Category;
+import edu.cit.erag.souvenirpos.shared.domain.Role;
+import edu.cit.erag.souvenirpos.shared.domain.User;
 import edu.cit.erag.souvenirpos.repository.CategoryRepository;
 import edu.cit.erag.souvenirpos.repository.UserRepository;
 import org.slf4j.Logger;

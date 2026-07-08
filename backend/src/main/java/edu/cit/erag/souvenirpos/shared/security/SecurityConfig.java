@@ -1,6 +1,6 @@
-package edu.cit.erag.souvenirpos.config;
+package edu.cit.erag.souvenirpos.shared.security;
 
-import edu.cit.erag.souvenirpos.security.JwtAuthFilter;
+import edu.cit.erag.souvenirpos.shared.security.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

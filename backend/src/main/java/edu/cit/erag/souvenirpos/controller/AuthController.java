@@ -2,9 +2,9 @@ package edu.cit.erag.souvenirpos.controller;
 
 import edu.cit.erag.souvenirpos.dto.LoginRequest;
 import edu.cit.erag.souvenirpos.dto.LoginResponse;
-import edu.cit.erag.souvenirpos.entity.User;
+import edu.cit.erag.souvenirpos.shared.domain.User;
 import edu.cit.erag.souvenirpos.repository.UserRepository;
-import edu.cit.erag.souvenirpos.security.JwtService;
+import edu.cit.erag.souvenirpos.shared.security.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;

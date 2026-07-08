@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.security;
+package edu.cit.erag.souvenirpos.shared.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

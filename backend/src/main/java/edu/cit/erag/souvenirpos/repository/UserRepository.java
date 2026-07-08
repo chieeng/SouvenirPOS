@@ -1,6 +1,6 @@
 package edu.cit.erag.souvenirpos.repository;
 
-import edu.cit.erag.souvenirpos.entity.User;
+import edu.cit.erag.souvenirpos.shared.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

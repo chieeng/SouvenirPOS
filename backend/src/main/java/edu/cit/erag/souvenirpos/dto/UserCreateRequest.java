@@ -1,6 +1,6 @@
 package edu.cit.erag.souvenirpos.dto;
 
-import edu.cit.erag.souvenirpos.entity.Role;
+import edu.cit.erag.souvenirpos.shared.domain.Role;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

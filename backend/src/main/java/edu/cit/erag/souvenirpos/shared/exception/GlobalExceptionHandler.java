@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.exception;
+package edu.cit.erag.souvenirpos.shared.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

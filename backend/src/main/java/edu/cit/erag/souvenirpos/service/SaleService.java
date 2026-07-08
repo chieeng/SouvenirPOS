@@ -2,10 +2,10 @@ package edu.cit.erag.souvenirpos.service;
 
 import edu.cit.erag.souvenirpos.dto.SaleCreateRequest;
 import edu.cit.erag.souvenirpos.dto.SaleItemRequest;
-import edu.cit.erag.souvenirpos.entity.Category;
-import edu.cit.erag.souvenirpos.entity.Sale;
-import edu.cit.erag.souvenirpos.entity.SaleItem;
-import edu.cit.erag.souvenirpos.entity.User;
+import edu.cit.erag.souvenirpos.shared.domain.Category;
+import edu.cit.erag.souvenirpos.shared.domain.Sale;
+import edu.cit.erag.souvenirpos.shared.domain.SaleItem;
+import edu.cit.erag.souvenirpos.shared.domain.User;
 import edu.cit.erag.souvenirpos.repository.CategoryRepository;
 import edu.cit.erag.souvenirpos.repository.SaleRepository;
 import edu.cit.erag.souvenirpos.repository.UserRepository;

@@ -1,6 +1,6 @@
 package edu.cit.erag.souvenirpos.dto;
 
-import edu.cit.erag.souvenirpos.entity.SaleItem;
+import edu.cit.erag.souvenirpos.shared.domain.SaleItem;
 
 import java.math.BigDecimal;
 

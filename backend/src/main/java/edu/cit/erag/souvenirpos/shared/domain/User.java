@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.entity;
+package edu.cit.erag.souvenirpos.shared.domain;
 
 import jakarta.persistence.*;
 

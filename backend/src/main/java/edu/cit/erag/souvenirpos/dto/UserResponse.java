@@ -1,6 +1,6 @@
 package edu.cit.erag.souvenirpos.dto;
 
-import edu.cit.erag.souvenirpos.entity.User;
+import edu.cit.erag.souvenirpos.shared.domain.User;
 
 public class UserResponse {
 

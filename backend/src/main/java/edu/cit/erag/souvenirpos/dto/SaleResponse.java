@@ -1,6 +1,6 @@
 package edu.cit.erag.souvenirpos.dto;
 
-import edu.cit.erag.souvenirpos.entity.Sale;
+import edu.cit.erag.souvenirpos.shared.domain.Sale;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

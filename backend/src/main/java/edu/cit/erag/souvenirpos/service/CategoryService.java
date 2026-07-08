@@ -1,7 +1,7 @@
 package edu.cit.erag.souvenirpos.service;
 
 import edu.cit.erag.souvenirpos.dto.CategoryCreateRequest;
-import edu.cit.erag.souvenirpos.entity.Category;
+import edu.cit.erag.souvenirpos.shared.domain.Category;
 import edu.cit.erag.souvenirpos.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 

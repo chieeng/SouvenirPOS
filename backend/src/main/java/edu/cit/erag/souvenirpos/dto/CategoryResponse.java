@@ -1,6 +1,6 @@
 package edu.cit.erag.souvenirpos.dto;
 
-import edu.cit.erag.souvenirpos.entity.Category;
+import edu.cit.erag.souvenirpos.shared.domain.Category;
 
 public class CategoryResponse {
 
