@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.data.repository
+package edu.cit.erag.souvenirpos.feature.users
 
 import edu.cit.erag.souvenirpos.core.data.model.UserCreateRequest
 import edu.cit.erag.souvenirpos.core.data.model.UserResponse

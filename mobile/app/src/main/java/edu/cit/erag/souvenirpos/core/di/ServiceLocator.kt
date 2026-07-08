@@ -7,7 +7,7 @@ import edu.cit.erag.souvenirpos.core.network.ApiService
 import edu.cit.erag.souvenirpos.core.network.AuthInterceptor
 import edu.cit.erag.souvenirpos.feature.auth.AuthRepository
 import edu.cit.erag.souvenirpos.feature.pos.PosRepository
-import edu.cit.erag.souvenirpos.data.repository.UserRepository
+import edu.cit.erag.souvenirpos.feature.users.UserRepository
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

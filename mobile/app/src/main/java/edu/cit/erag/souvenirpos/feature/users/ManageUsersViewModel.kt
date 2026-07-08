@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.ui.users
+package edu.cit.erag.souvenirpos.feature.users
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
