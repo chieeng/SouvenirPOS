@@ -4,7 +4,7 @@ import edu.cit.erag.souvenirpos.shared.domain.Category;
 import edu.cit.erag.souvenirpos.shared.domain.Role;
 import edu.cit.erag.souvenirpos.shared.domain.User;
 import edu.cit.erag.souvenirpos.repository.CategoryRepository;
-import edu.cit.erag.souvenirpos.repository.UserRepository;
+import edu.cit.erag.souvenirpos.feature.user.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

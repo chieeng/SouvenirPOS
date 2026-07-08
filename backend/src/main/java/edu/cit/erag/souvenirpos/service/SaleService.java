@@ -8,7 +8,7 @@ import edu.cit.erag.souvenirpos.shared.domain.SaleItem;
 import edu.cit.erag.souvenirpos.shared.domain.User;
 import edu.cit.erag.souvenirpos.repository.CategoryRepository;
 import edu.cit.erag.souvenirpos.repository.SaleRepository;
-import edu.cit.erag.souvenirpos.repository.UserRepository;
+import edu.cit.erag.souvenirpos.feature.user.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;

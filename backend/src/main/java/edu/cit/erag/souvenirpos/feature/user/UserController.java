@@ -1,8 +1,8 @@
-package edu.cit.erag.souvenirpos.controller;
+package edu.cit.erag.souvenirpos.feature.user;
 
-import edu.cit.erag.souvenirpos.dto.UserCreateRequest;
-import edu.cit.erag.souvenirpos.dto.UserResponse;
-import edu.cit.erag.souvenirpos.service.UserService;
+import edu.cit.erag.souvenirpos.feature.user.UserCreateRequest;
+import edu.cit.erag.souvenirpos.feature.user.UserResponse;
+import edu.cit.erag.souvenirpos.feature.user.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -1,7 +1,7 @@
 package edu.cit.erag.souvenirpos.shared.security;
 
 import edu.cit.erag.souvenirpos.shared.domain.User;
-import edu.cit.erag.souvenirpos.repository.UserRepository;
+import edu.cit.erag.souvenirpos.feature.user.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

@@ -1,8 +1,8 @@
-package edu.cit.erag.souvenirpos.service;
+package edu.cit.erag.souvenirpos.feature.user;
 
-import edu.cit.erag.souvenirpos.dto.UserCreateRequest;
+import edu.cit.erag.souvenirpos.feature.user.UserCreateRequest;
 import edu.cit.erag.souvenirpos.shared.domain.User;
-import edu.cit.erag.souvenirpos.repository.UserRepository;
+import edu.cit.erag.souvenirpos.feature.user.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
