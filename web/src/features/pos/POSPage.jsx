@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../features/auth/AuthContext'
-import client from '../shared/api/client'
+import { useAuth } from '../auth/AuthContext'
+import client from '../../shared/api/client'
 import './POSPage.css'
 
 const NUMPAD_KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫']
