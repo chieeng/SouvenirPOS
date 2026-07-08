@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.dto;
+package edu.cit.erag.souvenirpos.feature.auth;
 
 import jakarta.validation.constraints.NotBlank;
 

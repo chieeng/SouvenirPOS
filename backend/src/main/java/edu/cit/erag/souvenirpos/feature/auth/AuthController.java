@@ -1,7 +1,7 @@
-package edu.cit.erag.souvenirpos.controller;
+package edu.cit.erag.souvenirpos.feature.auth;
 
-import edu.cit.erag.souvenirpos.dto.LoginRequest;
-import edu.cit.erag.souvenirpos.dto.LoginResponse;
+import edu.cit.erag.souvenirpos.feature.auth.LoginRequest;
+import edu.cit.erag.souvenirpos.feature.auth.LoginResponse;
 import edu.cit.erag.souvenirpos.shared.domain.User;
 import edu.cit.erag.souvenirpos.repository.UserRepository;
 import edu.cit.erag.souvenirpos.shared.security.JwtService;
