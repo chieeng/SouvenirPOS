@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.ui.history
+package edu.cit.erag.souvenirpos.feature.history
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
