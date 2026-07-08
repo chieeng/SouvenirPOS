@@ -3,7 +3,7 @@ import ProtectedRoute from './features/auth/ProtectedRoute'
 import LoginPage from './features/auth/LoginPage'
 import POSPage from './features/pos/POSPage'
 import ManageUsersPage from './features/users/ManageUsersPage'
-import SalesHistoryPage from './pages/SalesHistoryPage'
+import SalesHistoryPage from './features/sales-history/SalesHistoryPage'
 
 export default function App() {
   return (
