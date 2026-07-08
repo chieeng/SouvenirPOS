@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.data.repository
+package edu.cit.erag.souvenirpos.feature.pos
 
 import edu.cit.erag.souvenirpos.core.data.model.Category
 import edu.cit.erag.souvenirpos.core.data.model.SaleCreateRequest
