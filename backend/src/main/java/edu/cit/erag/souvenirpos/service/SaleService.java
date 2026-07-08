@@ -6,7 +6,7 @@ import edu.cit.erag.souvenirpos.shared.domain.Category;
 import edu.cit.erag.souvenirpos.shared.domain.Sale;
 import edu.cit.erag.souvenirpos.shared.domain.SaleItem;
 import edu.cit.erag.souvenirpos.shared.domain.User;
-import edu.cit.erag.souvenirpos.repository.CategoryRepository;
+import edu.cit.erag.souvenirpos.feature.category.CategoryRepository;
 import edu.cit.erag.souvenirpos.repository.SaleRepository;
 import edu.cit.erag.souvenirpos.feature.user.UserRepository;
 import org.springframework.security.core.Authentication;

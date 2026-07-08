@@ -1,8 +1,8 @@
-package edu.cit.erag.souvenirpos.controller;
+package edu.cit.erag.souvenirpos.feature.category;
 
-import edu.cit.erag.souvenirpos.dto.CategoryCreateRequest;
-import edu.cit.erag.souvenirpos.dto.CategoryResponse;
-import edu.cit.erag.souvenirpos.service.CategoryService;
+import edu.cit.erag.souvenirpos.feature.category.CategoryCreateRequest;
+import edu.cit.erag.souvenirpos.feature.category.CategoryResponse;
+import edu.cit.erag.souvenirpos.feature.category.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;

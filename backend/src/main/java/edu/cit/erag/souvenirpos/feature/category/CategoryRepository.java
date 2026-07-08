@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.repository;
+package edu.cit.erag.souvenirpos.feature.category;
 
 import edu.cit.erag.souvenirpos.shared.domain.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
