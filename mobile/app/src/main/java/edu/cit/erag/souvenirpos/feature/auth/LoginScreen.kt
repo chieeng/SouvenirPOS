@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.ui.login
+package edu.cit.erag.souvenirpos.feature.auth
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

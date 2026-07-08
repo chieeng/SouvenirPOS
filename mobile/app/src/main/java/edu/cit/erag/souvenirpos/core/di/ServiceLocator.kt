@@ -5,7 +5,7 @@ import edu.cit.erag.souvenirpos.BuildConfig
 import edu.cit.erag.souvenirpos.core.data.TokenStore
 import edu.cit.erag.souvenirpos.core.network.ApiService
 import edu.cit.erag.souvenirpos.core.network.AuthInterceptor
-import edu.cit.erag.souvenirpos.data.repository.AuthRepository
+import edu.cit.erag.souvenirpos.feature.auth.AuthRepository
 import edu.cit.erag.souvenirpos.data.repository.PosRepository
 import edu.cit.erag.souvenirpos.data.repository.UserRepository
 import okhttp3.OkHttpClient

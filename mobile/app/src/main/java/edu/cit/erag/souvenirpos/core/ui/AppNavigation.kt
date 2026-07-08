@@ -6,7 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import edu.cit.erag.souvenirpos.core.di.ServiceLocator
 import edu.cit.erag.souvenirpos.ui.history.SalesHistoryScreen
-import edu.cit.erag.souvenirpos.ui.login.LoginScreen
+import edu.cit.erag.souvenirpos.feature.auth.LoginScreen
 import edu.cit.erag.souvenirpos.ui.pos.PosScreen
 import edu.cit.erag.souvenirpos.ui.users.ManageUsersScreen
 

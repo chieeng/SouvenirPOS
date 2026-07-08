@@ -1,4 +1,4 @@
-package edu.cit.erag.souvenirpos.data.repository
+package edu.cit.erag.souvenirpos.feature.auth
 
 import edu.cit.erag.souvenirpos.core.data.TokenStore
 import edu.cit.erag.souvenirpos.core.data.model.LoginRequest
