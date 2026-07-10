@@ -21,6 +21,10 @@ data class Category(
     val name: String,
 )
 
+data class CategoryCreateRequest(
+    val name: String,
+)
+
 data class UserResponse(
     val id: Long,
     val name: String,
@@ -64,4 +68,19 @@ data class SaleResponse(
     val paymentAmount: Double,
     val changeAmount: Double,
     val items: List<SaleItemResponse>,
+)
+
+// Dashboard aggregates (FR-015). Mirrors the backend SaleSummaryResponse.
+data class DailyBucket(
+    val date: String, // ISO date, e.g. "2026-07-10"
+    val total: Double,
+    val count: Int,
+)
+
+data class SaleSummaryResponse(
+    val todayTotal: Double,
+    val todayCount: Int,
+    val weekTotal: Double,
+    val weekCount: Int,
+    val daily: List<DailyBucket>,
 )

@@ -5,16 +5,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import edu.cit.erag.souvenirpos.core.di.ServiceLocator
-import edu.cit.erag.souvenirpos.feature.history.SalesHistoryScreen
-import edu.cit.erag.souvenirpos.feature.auth.LoginScreen
-import edu.cit.erag.souvenirpos.feature.pos.PosScreen
-import edu.cit.erag.souvenirpos.feature.users.ManageUsersScreen
+import edu.cit.erag.souvenirpos.categories.ui.ManageCategoriesScreen
+import edu.cit.erag.souvenirpos.dashboard.ui.DashboardScreen
+import edu.cit.erag.souvenirpos.history.ui.SalesHistoryScreen
+import edu.cit.erag.souvenirpos.auth.ui.LoginScreen
+import edu.cit.erag.souvenirpos.pos.ui.PosScreen
+import edu.cit.erag.souvenirpos.users.ui.ManageUsersScreen
 
 object Routes {
     const val LOGIN = "login"
     const val POS = "pos"
     const val USERS = "users"
     const val HISTORY = "history"
+    const val DASHBOARD = "dashboard"
+    const val CATEGORIES = "categories"
 }
 
 @Composable
@@ -41,6 +45,8 @@ fun AppNavigation() {
                 },
                 onManageUsers = { navController.navigate(Routes.USERS) },
                 onViewHistory = { navController.navigate(Routes.HISTORY) },
+                onViewDashboard = { navController.navigate(Routes.DASHBOARD) },
+                onManageCategories = { navController.navigate(Routes.CATEGORIES) },
             )
         }
         composable(Routes.USERS) {
@@ -48,6 +54,12 @@ fun AppNavigation() {
         }
         composable(Routes.HISTORY) {
             SalesHistoryScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.DASHBOARD) {
+            DashboardScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.CATEGORIES) {
+            ManageCategoriesScreen(onBack = { navController.popBackStack() })
         }
     }
 }

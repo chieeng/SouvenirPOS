@@ -5,9 +5,11 @@ import edu.cit.erag.souvenirpos.BuildConfig
 import edu.cit.erag.souvenirpos.core.data.TokenStore
 import edu.cit.erag.souvenirpos.core.network.ApiService
 import edu.cit.erag.souvenirpos.core.network.AuthInterceptor
-import edu.cit.erag.souvenirpos.feature.auth.AuthRepository
-import edu.cit.erag.souvenirpos.feature.pos.PosRepository
-import edu.cit.erag.souvenirpos.feature.users.UserRepository
+import edu.cit.erag.souvenirpos.auth.data.AuthRepository
+import edu.cit.erag.souvenirpos.categories.data.CategoryRepository
+import edu.cit.erag.souvenirpos.dashboard.data.DashboardRepository
+import edu.cit.erag.souvenirpos.pos.data.PosRepository
+import edu.cit.erag.souvenirpos.users.data.UserRepository
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -26,6 +28,10 @@ object ServiceLocator {
     lateinit var posRepository: PosRepository
         private set
     lateinit var userRepository: UserRepository
+        private set
+    lateinit var categoryRepository: CategoryRepository
+        private set
+    lateinit var dashboardRepository: DashboardRepository
         private set
 
     fun init(context: Context) {
@@ -51,5 +57,7 @@ object ServiceLocator {
         authRepository = AuthRepository(api, tokenStore)
         posRepository = PosRepository(api)
         userRepository = UserRepository(api)
+        categoryRepository = CategoryRepository(api)
+        dashboardRepository = DashboardRepository(api)
     }
 }

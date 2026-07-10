@@ -1,9 +1,11 @@
 import { Routes, Route } from 'react-router-dom'
-import ProtectedRoute from './features/auth/ProtectedRoute'
-import LoginPage from './features/auth/LoginPage'
-import POSPage from './features/pos/POSPage'
-import ManageUsersPage from './features/users/ManageUsersPage'
-import SalesHistoryPage from './features/sales-history/SalesHistoryPage'
+import ProtectedRoute from './auth/routing/ProtectedRoute'
+import LoginPage from './auth/components/LoginPage'
+import POSPage from './pos/components/POSPage'
+import ManageUsersPage from './users/components/ManageUsersPage'
+import SalesHistoryPage from './sales-history/components/SalesHistoryPage'
+import DashboardPage from './dashboard/components/DashboardPage'
+import ManageCategoriesPage from './categories/components/ManageCategoriesPage'
 
 export default function App() {
   return (
@@ -26,10 +28,26 @@ export default function App() {
         }
       />
       <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/users"
         element={
           <ProtectedRoute requireRole="OWNER">
             <ManageUsersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/categories"
+        element={
+          <ProtectedRoute requireRole="OWNER">
+            <ManageCategoriesPage />
           </ProtectedRoute>
         }
       />
