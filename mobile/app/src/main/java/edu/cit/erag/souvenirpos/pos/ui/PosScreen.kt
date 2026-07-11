@@ -200,6 +200,20 @@ private fun SellStep(
             Spacer(Modifier.height(16.dp))
             Keypad { viewModel.onNumpad(if (it == "⌫") PosViewModel.KEY_BACKSPACE else it) }
 
+            Spacer(Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Quantity", style = MaterialTheme.typography.titleSmall)
+                Stepper(
+                    value = viewModel.quantity,
+                    onDec = viewModel::decQuantity,
+                    onInc = viewModel::incQuantity,
+                )
+            }
+
             viewModel.error?.let {
                 Spacer(Modifier.height(12.dp))
                 Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
@@ -400,6 +414,13 @@ private fun CartStep(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(line.category.name, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                         Text(peso(line.unitPrice), color = Faint, fontSize = 12.sp)
+                        Spacer(Modifier.height(6.dp))
+                        Stepper(
+                            value = line.quantity,
+                            onDec = { viewModel.decLine(line.id) },
+                            onInc = { viewModel.incLine(line.id) },
+                            compact = true,
+                        )
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(peso(line.subtotal), fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -620,6 +641,39 @@ private fun Keypad(onKey: (String) -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun Stepper(value: Int, onDec: () -> Unit, onInc: () -> Unit, compact: Boolean = false) {
+    val h = if (compact) 30.dp else 44.dp
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(9.dp))
+            .background(if (compact) Paper else Sand),
+    ) {
+        StepBtn("−", h, Muted, onDec)
+        Text(
+            value.toString(),
+            fontWeight = FontWeight.Bold,
+            fontSize = if (compact) 13.sp else 18.sp,
+            modifier = Modifier.width(if (compact) 26.dp else 44.dp),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+        StepBtn("+", h, Teal, onInc)
+    }
+}
+
+@Composable
+private fun StepBtn(symbol: String, h: androidx.compose.ui.unit.Dp, color: Color, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(h)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(symbol, color = color, fontSize = if (h > 40.dp) 22.sp else 16.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 

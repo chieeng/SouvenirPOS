@@ -28,6 +28,7 @@ export default function POSPage() {
   const [categories, setCategories] = useState([])
   const [category, setCategory] = useState(null)
   const [priceInput, setPriceInput] = useState('')
+  const [quantity, setQuantity] = useState(1)
   const [cart, setCart] = useState([])
   const [payment, setPayment] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -49,10 +50,10 @@ export default function POSPage() {
   }, [])
 
   const total = useMemo(
-    () => cart.reduce((sum, line) => sum + line.price, 0),
+    () => cart.reduce((sum, line) => sum + line.price * line.quantity, 0),
     [cart],
   )
-  const cartCount = cart.length
+  const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0)
 
   const paymentAmount = parseFloat(payment) || 0
   const change = paymentAmount - total
@@ -76,14 +77,19 @@ export default function POSPage() {
     setPayment(safe)
   }
 
+  function adjustQuantity(delta) {
+    setQuantity((prev) => Math.max(1, prev + delta))
+  }
+
   function handleAddToCart() {
     const price = parseFloat(priceInput)
-    if (!category || !price || price <= 0) {
+    // FR-007: a sale line needs a category, a manually entered price, and quantity >= 1.
+    if (!category || !price || price <= 0 || quantity < 1) {
       return
     }
-    // quantity is fixed at 1 per line; the sale API still expects a quantity field.
-    setCart((prev) => [...prev, { id: Date.now(), category, price, quantity: 1 }])
+    setCart((prev) => [...prev, { id: Date.now(), category, price, quantity }])
     setPriceInput('')
+    setQuantity(1)
   }
 
   function handleRemoveLine(id) {
@@ -178,6 +184,19 @@ export default function POSPage() {
             ))}
           </div>
 
+          <div className="quantity-row">
+            <span>Quantity</span>
+            <div className="quantity-stepper">
+              <button onClick={() => adjustQuantity(-1)} aria-label="Decrease quantity">
+                −
+              </button>
+              <span className="quantity-value">{quantity}</span>
+              <button onClick={() => adjustQuantity(1)} aria-label="Increase quantity">
+                +
+              </button>
+            </div>
+          </div>
+
           <button className="pos-add-btn" onClick={handleAddToCart}>
             <span className="pos-add-plus">+</span> Add to sale
           </button>
@@ -202,9 +221,11 @@ export default function POSPage() {
                 <div className="cart-line-swatch" aria-hidden="true" />
                 <div className="cart-line-info">
                   <strong>{line.category.name}</strong>
-                  <span>{formatPeso(line.price)}</span>
+                  <span>
+                    {formatPeso(line.price)} × {line.quantity}
+                  </span>
                 </div>
-                <div className="cart-line-price">{formatPeso(line.price)}</div>
+                <div className="cart-line-price">{formatPeso(line.price * line.quantity)}</div>
                 <button
                   className="cart-line-remove"
                   onClick={() => handleRemoveLine(line.id)}
