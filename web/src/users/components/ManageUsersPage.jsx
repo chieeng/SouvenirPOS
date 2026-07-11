@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import AppShell, { initialsOf } from '../../shared/layout/AppShell'
 import client from '../../shared/api/client'
 import '../styles/ManageUsersPage.css'
 
+const AVATAR_COLORS = ['#c98a3a', '#147a6e', '#5c7d8a', '#9a7bb0', '#2f8f5b']
+
 export default function ManageUsersPage() {
-  const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
@@ -41,66 +42,112 @@ export default function ManageUsersPage() {
   }
 
   return (
-    <div className="users-page">
-      <header className="users-header">
-        <h1>Manage Users</h1>
-        <button onClick={() => navigate('/')}>Back to POS</button>
-      </header>
+    <AppShell title="Team & access" subtitle="Staff accounts">
+      <div className="page-head">
+        <div>
+          <h2>Team &amp; access</h2>
+          <div className="page-head-sub">Create staff logins and set who can manage the store</div>
+        </div>
+      </div>
 
-      <main className="users-main">
-        <form className="users-form" onSubmit={handleSubmit}>
-          <h2>Create Account</h2>
+      <div className="settings-grid">
+        <form className="card settings-card" onSubmit={handleSubmit}>
+          <div className="settings-card-head">Add staff</div>
+          <div className="settings-card-body">
+            <label className="field-label" htmlFor="u-name">
+              Full name
+            </label>
+            <input
+              id="u-name"
+              className="field-input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
 
-          <label>Full Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} required />
+            <label className="field-label" htmlFor="u-username">
+              Username
+            </label>
+            <input
+              id="u-username"
+              className="field-input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
 
-          <label>Username</label>
-          <input value={username} onChange={(e) => setUsername(e.target.value)} required />
+            <label className="field-label" htmlFor="u-password">
+              Password
+            </label>
+            <input
+              id="u-password"
+              className="field-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
+              required
+            />
 
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            minLength={6}
-            required
-          />
+            <label className="field-label" htmlFor="u-role">
+              Role
+            </label>
+            <select
+              id="u-role"
+              className="field-select"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="CASHIER">Cashier — sell only</option>
+              <option value="OWNER">Owner — full access</option>
+            </select>
 
-          <label>Role</label>
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="CASHIER">Cashier</option>
-            <option value="OWNER">Owner</option>
-          </select>
+            {error && <div className="form-error">{error}</div>}
 
-          {error && <div className="users-error">{error}</div>}
-
-          <button type="submit" disabled={submitting}>
-            {submitting ? 'Creating...' : 'Create Account'}
-          </button>
+            <button type="submit" className="form-submit" disabled={submitting}>
+              <span className="form-submit-plus">+</span>
+              {submitting ? 'Creating…' : 'Create account'}
+            </button>
+          </div>
         </form>
 
-        <div className="users-list">
-          <h2>Existing Users</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Username</th>
-                <th>Role</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.name}</td>
-                  <td>{u.username}</td>
-                  <td>{u.role}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="card settings-card">
+          <div className="settings-card-head">
+            <span>Staff accounts</span>
+            <span className="settings-count">{users.length}</span>
+          </div>
+          <div className="users-table">
+            <div className="users-row users-head">
+              <span>Staff</span>
+              <span>Username</span>
+              <span className="users-right">Role</span>
+            </div>
+            {users.map((u, i) => {
+              const isOwner = u.role === 'OWNER'
+              return (
+                <div key={u.id} className="users-row">
+                  <span className="users-staff">
+                    <span
+                      className="users-avatar"
+                      style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}
+                    >
+                      {initialsOf(u.name)}
+                    </span>
+                    {u.name}
+                  </span>
+                  <span className="users-username">{u.username}</span>
+                  <span className="users-right">
+                    <span className={`badge ${isOwner ? 'badge-admin' : 'badge-cashier'}`}>
+                      {isOwner ? 'Owner' : 'Cashier'}
+                    </span>
+                  </span>
+                </div>
+              )
+            })}
+            {users.length === 0 && <p className="settings-empty">No staff yet.</p>}
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   )
 }

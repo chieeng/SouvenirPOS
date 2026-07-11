@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import AppShell from '../../shared/layout/AppShell'
 import client from '../../shared/api/client'
 import '../styles/DashboardPage.css'
 
@@ -12,11 +12,13 @@ function formatPeso(amount) {
 function dayLabel(iso) {
   const d = new Date(`${iso}T00:00:00`)
   if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'numeric', day: 'numeric' })
+  return d.toLocaleDateString(undefined, { weekday: 'short' })
 }
 
+// Warm teal → sand ramp so the tallest bars read as the busiest days.
+const BAR_COLORS = ['#147a6e', '#2f8f5b', '#8fc9c0', '#c98a3a', '#cfe6e2', '#e3ded4', '#e3ded4']
+
 export default function DashboardPage() {
-  const navigate = useNavigate()
   const [summary, setSummary] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -44,66 +46,85 @@ export default function DashboardPage() {
 
   const daily = summary?.daily ?? []
   const maxDaily = daily.reduce((max, d) => Math.max(max, Number(d.total)), 0)
+  const todayCount = summary?.todayCount ?? 0
+  const avgBasket = todayCount > 0 ? Number(summary.todayTotal) / todayCount : 0
+
+  const liveTag = (
+    <span className="dash-live">
+      <span className="dash-live-dot" />
+      {loading ? 'Loading…' : 'Live · every 5s'}
+    </span>
+  )
 
   return (
-    <div className="dash-page">
-      <header className="dash-header">
+    <AppShell title="Dashboard" subtitle="Store overview" actions={liveTag}>
+      <div className="page-head">
         <div>
-          <h1>Sales Dashboard</h1>
-          <span className="dash-sub">{loading ? 'Loading…' : 'Live · updates every 5s'}</span>
+          <h2>Sales dashboard</h2>
+          <div className="page-head-sub">Real-time totals across every register and device</div>
         </div>
-        <button onClick={() => navigate('/')}>Back to POS</button>
-      </header>
+      </div>
 
       {error && <div className="dash-error">{error}</div>}
 
-      <main className="dash-main">
-        <section className="dash-cards">
-          <div className="dash-card">
-            <span className="dash-card-label">Today</span>
-            <span className="dash-card-total">{formatPeso(summary?.todayTotal)}</span>
-            <span className="dash-card-meta">
-              {summary?.todayCount ?? 0} sale{summary?.todayCount === 1 ? '' : 's'}
-            </span>
+      <div className="dash-kpis">
+        <div className="kpi">
+          <div className="kpi-label">Today&apos;s sales</div>
+          <div className="kpi-value">{formatPeso(summary?.todayTotal)}</div>
+          <div className="kpi-meta">
+            {todayCount} sale{todayCount === 1 ? '' : 's'} today
           </div>
-          <div className="dash-card accent">
-            <span className="dash-card-label">This Week</span>
-            <span className="dash-card-total">{formatPeso(summary?.weekTotal)}</span>
-            <span className="dash-card-meta">
-              {summary?.weekCount ?? 0} sale{summary?.weekCount === 1 ? '' : 's'}
-            </span>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Transactions</div>
+          <div className="kpi-value">{todayCount}</div>
+          <div className="kpi-meta">today</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Avg. basket</div>
+          <div className="kpi-value">{formatPeso(avgBasket)}</div>
+          <div className="kpi-meta">per sale today</div>
+        </div>
+        <div className="kpi kpi-accent">
+          <div className="kpi-label">This week</div>
+          <div className="kpi-value">{formatPeso(summary?.weekTotal)}</div>
+          <div className="kpi-meta">
+            {summary?.weekCount ?? 0} sale{summary?.weekCount === 1 ? '' : 's'}
           </div>
-        </section>
+        </div>
+      </div>
 
-        <section className="dash-breakdown">
-          <h2>Last 7 days</h2>
+      <div className="card dash-chart">
+        <div className="dash-chart-head">
+          <div className="dash-chart-title">Sales · last 7 days</div>
+          <div className="dash-chart-sub">Daily gross</div>
+        </div>
+
+        {daily.length === 0 && !loading ? (
+          <p className="dash-empty">No sales recorded yet.</p>
+        ) : (
           <div className="dash-bars">
-            {daily.map((d) => {
+            {daily.map((d, i) => {
               const total = Number(d.total)
-              const pct = maxDaily > 0 ? (total / maxDaily) * 100 : 0
+              const pct = maxDaily > 0 ? Math.max((total / maxDaily) * 100, 3) : 3
               return (
-                <div key={d.date} className="dash-bar-row">
-                  <span className="dash-bar-day">{dayLabel(d.date)}</span>
+                <div key={d.date} className="dash-bar">
+                  <span className="dash-bar-value">{formatPeso(total)}</span>
                   <div className="dash-bar-track">
                     <div
                       className="dash-bar-fill"
-                      style={{ width: `${pct}%` }}
+                      style={{ height: `${pct}%`, background: BAR_COLORS[i % BAR_COLORS.length] }}
                       aria-hidden="true"
                     />
                   </div>
-                  <span className="dash-bar-value">
-                    {formatPeso(total)}
-                    <span className="dash-bar-count">{d.count}</span>
-                  </span>
+                  <span className="dash-bar-day">{dayLabel(d.date)}</span>
+                  <span className="dash-bar-count">{d.count}</span>
                 </div>
               )
             })}
-            {daily.length === 0 && !loading && (
-              <p className="dash-empty">No sales recorded yet.</p>
-            )}
           </div>
-        </section>
-      </main>
-    </div>
+        )}
+      </div>
+    </AppShell>
   )
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import AppShell, { initialsOf } from '../../shared/layout/AppShell'
 import client from '../../shared/api/client'
 import '../styles/SalesHistoryPage.css'
 
@@ -19,8 +19,23 @@ function formatDateTime(iso) {
   })
 }
 
+function formatTime(iso) {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d
+    .toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+    .replace(/\s?([AP])M/i, (_, p) => p.toLowerCase())
+}
+
+function itemSummary(items) {
+  const names = items.map((it) =>
+    it.quantity > 1 ? `${it.categoryName} ×${it.quantity}` : it.categoryName,
+  )
+  const shown = names.slice(0, 3).join(', ')
+  return names.length > 3 ? `${shown} +${names.length - 3}` : shown
+}
+
 export default function SalesHistoryPage() {
-  const navigate = useNavigate()
   const [sales, setSales] = useState([])
   const [date, setDate] = useState('') // '' = all dates (FR-013 filter)
   const [loading, setLoading] = useState(true)
@@ -53,80 +68,121 @@ export default function SalesHistoryPage() {
   }, [date])
 
   const totalSales = sales.reduce((sum, s) => sum + Number(s.totalAmount), 0)
+  const itemsSold = sales.reduce(
+    (sum, s) => sum + s.items.reduce((n, it) => n + it.quantity, 0),
+    0,
+  )
+  const avgBasket = sales.length > 0 ? totalSales / sales.length : 0
+
+  const filterTools = (
+    <div className="hist-tools">
+      <input
+        type="date"
+        className="hist-date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+      />
+      {date && (
+        <button className="pill-btn" onClick={() => setDate('')}>
+          Show all
+        </button>
+      )}
+      <button className="pill-btn" onClick={() => loadSales(date)}>
+        Refresh
+      </button>
+    </div>
+  )
 
   return (
-    <div className="history-page">
-      <header className="history-header">
+    <AppShell title="Sales history" subtitle="Transactions" actions={filterTools}>
+      <div className="page-head">
         <div>
-          <h1>Sales History</h1>
-          <span className="history-sub">
+          <h2>Sales history</h2>
+          <div className="page-head-sub">
             {loading
               ? 'Loading…'
-              : `${sales.length} sale${sales.length === 1 ? '' : 's'} · ${formatPeso(totalSales)}`}
-          </span>
+              : `${sales.length} transaction${sales.length === 1 ? '' : 's'} · `}
+            {!loading && <strong className="hist-collected">{formatPeso(totalSales)}</strong>}
+            {!loading && ' collected'}
+          </div>
         </div>
-        <button onClick={() => navigate('/')}>Back to POS</button>
-      </header>
-
-      <div className="history-toolbar">
-        <label className="history-datefilter">
-          Filter by date
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </label>
-        {date && (
-          <button className="history-ghost" onClick={() => setDate('')}>
-            Show all
-          </button>
-        )}
-        <button className="history-ghost" onClick={() => loadSales(date)}>
-          Refresh
-        </button>
       </div>
 
-      {error && <div className="history-error">{error}</div>}
+      {error && <div className="hist-error">{error}</div>}
 
-      <main className="history-list">
+      <div className="hist-kpis">
+        <div className="kpi">
+          <div className="kpi-label">Gross sales</div>
+          <div className="kpi-value">{formatPeso(totalSales)}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Transactions</div>
+          <div className="kpi-value">{sales.length}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Items sold</div>
+          <div className="kpi-value">{itemsSold}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Avg. basket</div>
+          <div className="kpi-value hist-teal">{formatPeso(avgBasket)}</div>
+        </div>
+      </div>
+
+      <div className="card hist-table">
+        <div className="hist-row hist-head">
+          <span>Order</span>
+          <span>Time</span>
+          <span>Items</span>
+          <span className="hist-center">Qty</span>
+          <span>Cashier</span>
+          <span className="hist-right">Total</span>
+          <span className="hist-right">Status</span>
+        </div>
+
         {!loading && !error && sales.length === 0 && (
-          <p className="history-empty">
-            {date ? 'No sales on this date.' : 'No sales recorded yet.'}
-          </p>
+          <p className="hist-empty">{date ? 'No sales on this date.' : 'No sales recorded yet.'}</p>
         )}
 
-        {sales.map((sale) => (
-          <button key={sale.id} className="history-row" onClick={() => setSelected(sale)}>
-            <div className="history-row-main">
-              <strong>Sale #{sale.id}</strong>
-              <span className="history-row-date">{formatDateTime(sale.saleDateTime)}</span>
-            </div>
-            <div className="history-row-meta">
-              <span>{sale.cashierName}</span>
-              <span>
-                {sale.items.length} item{sale.items.length === 1 ? '' : 's'}
+        {sales.map((sale) => {
+          const qty = sale.items.reduce((n, it) => n + it.quantity, 0)
+          return (
+            <button key={sale.id} className="hist-row hist-data" onClick={() => setSelected(sale)}>
+              <span className="hist-order">#{sale.id}</span>
+              <span className="hist-muted">{formatTime(sale.saleDateTime)}</span>
+              <span className="hist-items">{itemSummary(sale.items)}</span>
+              <span className="hist-center hist-muted">{qty}</span>
+              <span className="hist-cashier">
+                <span className="hist-cashier-avatar">{initialsOf(sale.cashierName)}</span>
+                <span className="hist-cashier-name">{sale.cashierName}</span>
               </span>
-            </div>
-            <div className="history-row-total">{formatPeso(sale.totalAmount)}</div>
-          </button>
-        ))}
-      </main>
+              <span className="hist-right hist-total">{formatPeso(sale.totalAmount)}</span>
+              <span className="hist-right">
+                <em className="hist-status">Paid</em>
+              </span>
+            </button>
+          )
+        })}
+      </div>
 
       {selected && (
-        <div className="history-modal-scrim" onClick={() => setSelected(null)}>
-          <div className="history-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="history-modal-head">
+        <div className="hist-modal-scrim" onClick={() => setSelected(null)}>
+          <div className="hist-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hist-modal-head">
               <h2>Receipt · Sale #{selected.id}</h2>
               <button
-                className="history-modal-close"
+                className="hist-modal-close"
                 onClick={() => setSelected(null)}
                 aria-label="Close"
               >
                 ✕
               </button>
             </div>
-            <p className="history-modal-sub">
+            <p className="hist-modal-sub">
               {formatDateTime(selected.saleDateTime)} · {selected.cashierName}
             </p>
 
-            <table className="history-items">
+            <table className="hist-items-table">
               <thead>
                 <tr>
                   <th>Category</th>
@@ -147,16 +203,16 @@ export default function SalesHistoryPage() {
               </tbody>
             </table>
 
-            <div className="history-modal-totals">
-              <div className="history-total-row strong">
+            <div className="hist-modal-totals">
+              <div className="hist-total-row strong">
                 <span>Total</span>
                 <span>{formatPeso(selected.totalAmount)}</span>
               </div>
-              <div className="history-total-row">
+              <div className="hist-total-row">
                 <span>Payment</span>
                 <span>{formatPeso(selected.paymentAmount)}</span>
               </div>
-              <div className="history-total-row">
+              <div className="hist-total-row">
                 <span>Change</span>
                 <span>{formatPeso(selected.changeAmount)}</span>
               </div>
@@ -164,6 +220,6 @@ export default function SalesHistoryPage() {
           </div>
         </div>
       )}
-    </div>
+    </AppShell>
   )
 }

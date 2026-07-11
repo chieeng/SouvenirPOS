@@ -1,82 +1,54 @@
-.users-page {
-  min-height: 100vh;
-  background: #f4f5f7;
+.users-table {
+  display: flex;
+  flex-direction: column;
 }
-
-.users-header {
+.users-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 100px;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--line-3);
+  font-size: 13.5px;
+}
+.users-row:last-child {
+  border-bottom: none;
+}
+.users-head {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--line-2);
+}
+.users-right {
+  text-align: right;
+  justify-self: end;
+}
+.users-staff {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  background: #1f2937;
+  gap: 9px;
+  min-width: 0;
+}
+.users-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex: none;
 }
-
-.users-header button {
-  background: #374151;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.4rem 0.75rem;
-  cursor: pointer;
-}
-
-.users-main {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 1.5rem;
-  padding: 1.5rem;
-}
-
-.users-form, .users-list {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.users-form label {
-  display: block;
-  font-size: 0.85rem;
-  color: #374151;
-  margin-bottom: 0.25rem;
-  margin-top: 0.75rem;
-}
-
-.users-form input, .users-form select {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 1rem;
-  box-sizing: border-box;
-}
-
-.users-form button {
-  margin-top: 1.25rem;
-  width: 100%;
-  padding: 0.7rem;
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.users-error {
-  color: #dc2626;
-  font-size: 0.85rem;
-  margin-top: 0.75rem;
-}
-
-.users-list table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.users-list th, .users-list td {
-  text-align: left;
-  padding: 0.5rem;
-  border-bottom: 1px solid #f3f4f6;
+.users-username {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--muted-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

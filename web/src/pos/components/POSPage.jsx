@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import AppShell from '../../shared/layout/AppShell'
 import { useAuth } from '../../auth/context/AuthContext'
 import client from '../../shared/api/client'
 import '../styles/POSPage.css'
 
-const NUMPAD_KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫']
+const NUMPAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫']
 
 function formatPeso(amount) {
   return `₱${Number(amount).toFixed(2)}`
@@ -23,13 +23,11 @@ function formatDateTime(iso) {
 }
 
 export default function POSPage() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [categories, setCategories] = useState([])
   const [category, setCategory] = useState(null)
   const [priceInput, setPriceInput] = useState('')
-  const [quantity, setQuantity] = useState(1)
   const [cart, setCart] = useState([])
   const [payment, setPayment] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -51,12 +49,14 @@ export default function POSPage() {
   }, [])
 
   const total = useMemo(
-    () => cart.reduce((sum, line) => sum + line.price * line.quantity, 0),
+    () => cart.reduce((sum, line) => sum + line.price, 0),
     [cart],
   )
+  const cartCount = cart.length
 
   const paymentAmount = parseFloat(payment) || 0
   const change = paymentAmount - total
+  const priceValue = parseFloat(priceInput) || 0
 
   function handleNumpadPress(key) {
     if (key === '⌫') {
@@ -76,18 +76,14 @@ export default function POSPage() {
     setPayment(safe)
   }
 
-  function adjustQuantity(delta) {
-    setQuantity((prev) => Math.max(1, prev + delta))
-  }
-
   function handleAddToCart() {
     const price = parseFloat(priceInput)
-    if (!category || !price || price <= 0 || quantity < 1) {
+    if (!category || !price || price <= 0) {
       return
     }
-    setCart((prev) => [...prev, { id: Date.now(), category, price, quantity }])
+    // quantity is fixed at 1 per line; the sale API still expects a quantity field.
+    setCart((prev) => [...prev, { id: Date.now(), category, price, quantity: 1 }])
     setPriceInput('')
-    setQuantity(1)
   }
 
   function handleRemoveLine(id) {
@@ -121,191 +117,200 @@ export default function POSPage() {
     }
   }
 
-  return (
-    <div className="pos-page">
-      <header className="pos-header">
-        <div>
-          <h1>SouvenirPOS</h1>
-          <span className="pos-header-name">{user?.name}</span>
-        </div>
-        <div className="pos-header-actions">
-          <button onClick={() => navigate('/dashboard')}>Dashboard</button>
-          <button onClick={() => navigate('/history')}>Sales History</button>
-          {user?.role === 'OWNER' && (
-            <>
-              <button onClick={() => navigate('/categories')}>Categories</button>
-              <button onClick={() => navigate('/users')}>Manage Users</button>
-            </>
-          )}
-          <button onClick={logout}>Logout</button>
-        </div>
-      </header>
+  const drawerStatus = (
+    <div className="pos-drawer">
+      <div className="pos-drawer-reg">Register · Front 01</div>
+      <div className="pos-drawer-open">● Drawer open</div>
+    </div>
+  )
 
-      <main className="pos-main">
+  return (
+    <AppShell
+      title="Point of sale"
+      roleBadge={false}
+      variant="flush"
+      actions={drawerStatus}
+    >
+      <div className="pos">
+        {/* ---------- item entry ---------- */}
         <section className="pos-entry">
-          <div className="price-panel">
-            <span className="price-panel-label">Price</span>
-            <span className="price-panel-value">{priceInput ? formatPeso(parseFloat(priceInput) || 0) : '₱0'}</span>
+          <div className="pos-entry-label">Choose category</div>
+          <div className="category-chips">
+            {categories.length === 0 && <span className="category-hint">Loading categories…</span>}
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                className={`chip ${category?.id === c.id ? 'chip-active' : ''}`}
+                onClick={() => setCategory(c)}
+              >
+                {c.name}
+              </button>
+            ))}
           </div>
 
-          <div className="category-block">
-            <div className="category-block-header">
-              <span>Category</span>
-              <span className="category-hint">tap to select</span>
-            </div>
-            <div className="category-chips">
-              {categories.length === 0 && <span className="category-hint">Loading categories…</span>}
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  className={`chip ${category?.id === c.id ? 'chip-active' : ''}`}
-                  onClick={() => setCategory(c)}
-                >
-                  {c.name}
-                </button>
-              ))}
+          <div className="price-panel">
+            <span className="price-panel-label">Item amount</span>
+            <div className="price-panel-value">
+              ₱{Math.trunc(priceValue) || 0}
+              <span className="price-panel-decimals">
+                .{(priceInput.split('.')[1] ?? '00').padEnd(2, '0').slice(0, 2)}
+              </span>
             </div>
           </div>
 
           <div className="numpad">
             {NUMPAD_KEYS.map((key) => (
-              <button key={key} onClick={() => handleNumpadPress(key)}>
-                {key}
+              <button
+                key={key}
+                className={key === '⌫' ? 'numpad-del' : ''}
+                onClick={() => handleNumpadPress(key)}
+              >
+                {key === '⌫' ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                    <line x1="18" y1="9" x2="12" y2="15" />
+                    <line x1="12" y1="9" x2="18" y2="15" />
+                  </svg>
+                ) : (
+                  key
+                )}
               </button>
             ))}
           </div>
 
-          <div className="quantity-row">
-            <span>Quantity</span>
-            <div className="quantity-stepper">
-              <button onClick={() => adjustQuantity(-1)} aria-label="Decrease quantity">
-                −
-              </button>
-              <span className="quantity-value">{quantity}</span>
-              <button onClick={() => adjustQuantity(1)} aria-label="Increase quantity">
-                +
-              </button>
-            </div>
-          </div>
-
           <button className="pos-add-btn" onClick={handleAddToCart}>
-            + Add to Cart
+            <span className="pos-add-plus">+</span> Add to sale
           </button>
         </section>
 
-        <section className="pos-cart">
-          <h2>Sales Breakdown</h2>
+        {/* ---------- current sale ---------- */}
+        <aside className="pos-cart">
+          <div className="pos-cart-head">
+            <div>
+              <div className="pos-cart-title">Current sale</div>
+              <div className="pos-cart-meta">
+                {cartCount} item{cartCount === 1 ? '' : 's'}
+              </div>
+            </div>
+            <div className="pos-cart-cashier">{user?.name}</div>
+          </div>
+
           <div className="cart-lines">
             {cart.length === 0 && <p className="cart-empty">Nothing added yet.</p>}
             {cart.map((line) => (
               <div key={line.id} className="cart-line">
+                <div className="cart-line-swatch" aria-hidden="true" />
                 <div className="cart-line-info">
                   <strong>{line.category.name}</strong>
-                  <span>{formatPeso(line.price)} · x{line.quantity}</span>
+                  <span>{formatPeso(line.price)}</span>
                 </div>
-                <div className="cart-line-price">
-                  {formatPeso(line.price * line.quantity)}
-                </div>
-                <button className="cart-line-remove" onClick={() => handleRemoveLine(line.id)}>
+                <div className="cart-line-price">{formatPeso(line.price)}</div>
+                <button
+                  className="cart-line-remove"
+                  onClick={() => handleRemoveLine(line.id)}
+                  aria-label="Remove item"
+                >
                   ✕
                 </button>
               </div>
             ))}
           </div>
 
-          <div className="pos-field">
-            <label>Payment Received</label>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={payment}
-              onChange={handlePaymentChange}
-              placeholder="0.00"
-            />
+          <div className="cart-breakdown">
+            <div className="cart-breakdown-row">
+              <span>Subtotal</span>
+              <span>{formatPeso(total)}</span>
+            </div>
+            <div className="cart-breakdown-total">
+              <span>Total due</span>
+              <span>{formatPeso(total)}</span>
+            </div>
           </div>
 
-          <div className="cart-change">
-            <span>Change</span>
-            <span>{formatPeso(Math.max(change, 0))}</span>
+          <div className="cart-pay">
+            <label className="cart-pay-field">
+              <span>Payment received</span>
+              <div className="cart-pay-input">
+                <span className="cart-pay-peso">₱</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={payment}
+                  onChange={handlePaymentChange}
+                  placeholder="0.00"
+                />
+              </div>
+            </label>
+
+            <div className="cart-change">
+              <span>Change due</span>
+              <span>{formatPeso(Math.max(change, 0))}</span>
+            </div>
+
+            {error && <div className="cart-error">{error}</div>}
+
+            <button
+              className="pos-checkout-btn"
+              onClick={handleCheckout}
+              disabled={cart.length === 0 || paymentAmount < total || submitting}
+            >
+              {submitting ? 'Saving…' : `Checkout · ${formatPeso(total)}`}
+            </button>
           </div>
-
-          {error && <div className="cart-error">{error}</div>}
-        </section>
-      </main>
-
-      <footer className="pos-footer">
-        <div className="pos-footer-total">
-          <span>TOTAL</span>
-          <strong>{formatPeso(total)}</strong>
-        </div>
-        <button
-          className="pos-checkout-btn"
-          onClick={handleCheckout}
-          disabled={cart.length === 0 || paymentAmount < total || submitting}
-        >
-          {submitting ? 'Saving…' : 'Checkout'}
-        </button>
-      </footer>
+        </aside>
+      </div>
 
       {receipt && (
         <div className="pos-receipt-scrim" onClick={() => setReceipt(null)}>
           <div className="pos-receipt" onClick={(e) => e.stopPropagation()}>
-            <div className="pos-receipt-head">
-              <h2>Receipt · Sale #{receipt.id}</h2>
-              <button
-                className="pos-receipt-close"
-                onClick={() => setReceipt(null)}
-                aria-label="Close"
-              >
-                ✕
-              </button>
+            <div className="pos-receipt-check" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="5 12.5 10 17.5 19 7" />
+              </svg>
             </div>
+            <h2 className="pos-receipt-title">Payment complete</h2>
             <p className="pos-receipt-sub">
-              {formatDateTime(receipt.saleDateTime)} · {receipt.cashierName}
+              {formatPeso(receipt.changeAmount)} change · Sale #{receipt.id}
             </p>
 
-            <table className="pos-receipt-items">
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th className="num">Qty</th>
-                  <th className="num">Unit</th>
-                  <th className="num">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
+            <div className="pos-receipt-paper">
+              <div className="pos-receipt-brand">
+                <div className="pos-receipt-store">HARBOR ROW SOUVENIR CO.</div>
+                <div className="pos-receipt-line">{formatDateTime(receipt.saleDateTime)}</div>
+                <div className="pos-receipt-line">Cashier · {receipt.cashierName}</div>
+              </div>
+              <div className="pos-receipt-items">
                 {receipt.items.map((it) => (
-                  <tr key={it.id}>
-                    <td>{it.categoryName}</td>
-                    <td className="num">{it.quantity}</td>
-                    <td className="num">{formatPeso(it.unitPrice)}</td>
-                    <td className="num">{formatPeso(it.subtotal)}</td>
-                  </tr>
+                  <div key={it.id} className="pos-receipt-item">
+                    <span>
+                      {it.categoryName} ×{it.quantity}
+                    </span>
+                    <span>{Number(it.subtotal).toFixed(2)}</span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-
-            <div className="pos-receipt-totals">
-              <div className="pos-receipt-row strong">
-                <span>Total</span>
-                <span>{formatPeso(receipt.totalAmount)}</span>
               </div>
-              <div className="pos-receipt-row">
-                <span>Payment</span>
-                <span>{formatPeso(receipt.paymentAmount)}</span>
-              </div>
-              <div className="pos-receipt-row">
-                <span>Change</span>
-                <span>{formatPeso(receipt.changeAmount)}</span>
+              <div className="pos-receipt-totals">
+                <div className="pos-receipt-total">
+                  <span>TOTAL</span>
+                  <span>{formatPeso(receipt.totalAmount)}</span>
+                </div>
+                <div className="pos-receipt-item muted">
+                  <span>Cash</span>
+                  <span>{Number(receipt.paymentAmount).toFixed(2)}</span>
+                </div>
+                <div className="pos-receipt-item muted">
+                  <span>Change</span>
+                  <span>{Number(receipt.changeAmount).toFixed(2)}</span>
+                </div>
               </div>
             </div>
 
             <button className="pos-receipt-done" onClick={() => setReceipt(null)}>
-              Done
+              New sale
             </button>
           </div>
         </div>
       )}
-    </div>
+    </AppShell>
   )
 }

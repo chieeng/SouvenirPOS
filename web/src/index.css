@@ -1,8 +1,123 @@
+/* ============================================================
+   SouvenirPOS — design tokens & base
+   Harbor Row redesign · Space Grotesk / IBM Plex Sans
+   ============================================================ */
+
+:root {
+  /* brand */
+  --teal: #147a6e;
+  --teal-dark: #0f5e55;
+  --teal-soft: #e4f0ee;
+  --teal-border: #bfe0da;
+  --amber: #c98a3a;
+  --amber-soft: #f7edda;
+  --amber-border: #e9d3a6;
+  --amber-text: #8a5a12;
+
+  /* neutrals */
+  --ink: #26241f;
+  --text: #26241f;
+  --muted: #5c584f;
+  --muted-2: #78736a;
+  --faint: #a29b8f;
+
+  /* surfaces */
+  --canvas: #e7e4dd;
+  --sand: #f5f3ef;
+  --paper: #ffffff;
+  --paper-2: #fbfaf8;
+
+  /* lines */
+  --line: #ebe7df;
+  --line-2: #f0ece4;
+  --line-3: #f5f1ea;
+
+  /* status */
+  --green: #2f8f5b;
+  --green-soft: #e6f4ec;
+  --red: #c1554a;
+  --red-soft: #f9e9e7;
+
+  /* type */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* geometry */
+  --r-btn: 11px;
+  --r-card: 14px;
+  --r-lg: 18px;
+  --shadow-card: 0 1px 2px rgba(30, 25, 15, 0.04);
+  --shadow-pop: 0 20px 50px -20px rgba(30, 25, 15, 0.35);
+  --shadow-teal: 0 8px 18px -6px rgba(20, 122, 110, 0.55);
+
+  /* app rail */
+  --rail-w: 88px;
+}
+
 * {
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--sand);
+  font-family: var(--font-body);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--teal);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--teal-dark);
+}
+
+button {
+  font-family: var(--font-body);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.14);
+  border-radius: 8px;
+}
+
+/* shared pill badges reused across pages */
+.badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.badge-admin {
+  color: var(--teal-dark);
+  background: var(--teal-soft);
+  border: 1px solid var(--teal-border);
+}
+.badge-cashier {
+  color: var(--amber-text);
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-border);
 }
