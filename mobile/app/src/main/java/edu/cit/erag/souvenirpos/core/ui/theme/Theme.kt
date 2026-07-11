@@ -5,22 +5,41 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-
-private val Brand = Color(0xFF1E3A5F)
-private val BrandLight = Color(0xFF2E5A8F)
-private val Accent = Color(0xFF2E7D5B)
 
 private val LightColors = lightColorScheme(
-    primary = Brand,
-    secondary = BrandLight,
-    tertiary = Accent,
+    primary = Teal,
+    onPrimary = Paper,
+    primaryContainer = TealSoft,
+    onPrimaryContainer = TealDark,
+    secondary = Amber,
+    onSecondary = Paper,
+    secondaryContainer = AmberSoft,
+    onSecondaryContainer = AmberText,
+    tertiary = Green,
+    onTertiary = Paper,
+    background = Sand,
+    onBackground = Ink,
+    surface = Paper,
+    onSurface = Ink,
+    surfaceVariant = SurfaceVariantSand,
+    onSurfaceVariant = Muted,
+    outline = Faint,
+    outlineVariant = Line,
+    error = Red,
+    onError = Paper,
+    errorContainer = RedSoft,
+    onErrorContainer = Red,
 )
 
 private val DarkColors = darkColorScheme(
-    primary = BrandLight,
-    secondary = Brand,
-    tertiary = Accent,
+    primary = TealSoft,
+    onPrimary = TealDark,
+    primaryContainer = TealDark,
+    onPrimaryContainer = TealSoft,
+    secondary = Amber,
+    onSecondary = Ink,
+    tertiary = Green,
+    error = RedSoft,
 )
 
 @Composable
@@ -30,6 +49,7 @@ fun SouvenirPosTheme(
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = SouvenirTypography,
         content = content,
     )
 }
