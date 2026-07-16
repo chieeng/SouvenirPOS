@@ -5,5 +5,12 @@ spring.datasource.url=jdbc:postgresql://<host>:6543/postgres?prepareThreshold=0
 spring.datasource.username=postgres.<project-ref>
 spring.datasource.password=<db-password>
 
+# Must be a long, random, high-entropy value (HMAC-SHA key; at least 32 bytes / 256 bits).
 souvenirpos.jwt.secret=<a-long-random-secret-value>
+
+# Optional: initial owner password. If omitted, a strong random password is generated and
+# printed once to the startup log. Rotate it after first login either way.
 souvenirpos.seed.owner-password=<initial-owner-account-password>
+
+# Optional overrides (see application.properties for defaults):
+# souvenirpos.cors.allowed-origins=https://your-web-app.example.com
