@@ -1,6 +1,7 @@
 package edu.cit.erag.souvenirpos.user.service;
 
 import edu.cit.erag.souvenirpos.user.dto.UserCreateRequest;
+import edu.cit.erag.souvenirpos.shared.domain.Role;
 import edu.cit.erag.souvenirpos.shared.domain.User;
 import edu.cit.erag.souvenirpos.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -76,6 +77,13 @@ public class UserService {
 
         if (!enabled && target.getUsername().equals(actingUsername)) {
             throw new IllegalArgumentException("You cannot deactivate your own account");
+        }
+
+        // Defense-in-depth: never let the store be left with zero active owners. The target is
+        // still enabled here, so a count of 1 means it is the last one.
+        if (!enabled && target.getRole() == Role.OWNER
+                && userRepository.countByRoleAndEnabledTrue(Role.OWNER) <= 1) {
+            throw new IllegalArgumentException("Cannot deactivate the last active owner");
         }
 
         target.setEnabled(enabled);

@@ -5,7 +5,10 @@ import edu.cit.erag.souvenirpos.BuildConfig
 import edu.cit.erag.souvenirpos.core.data.TokenStore
 import edu.cit.erag.souvenirpos.core.network.ApiService
 import edu.cit.erag.souvenirpos.core.network.AuthInterceptor
+import edu.cit.erag.souvenirpos.core.network.UnauthorizedInterceptor
 import edu.cit.erag.souvenirpos.auth.data.AuthRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import edu.cit.erag.souvenirpos.categories.data.CategoryRepository
 import edu.cit.erag.souvenirpos.dashboard.data.DashboardRepository
 import edu.cit.erag.souvenirpos.pos.data.PosRepository
@@ -34,6 +37,10 @@ object ServiceLocator {
     lateinit var dashboardRepository: DashboardRepository
         private set
 
+    // Emitted when the backend rejects our token; the root composable navigates to login.
+    private val _unauthorizedEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val unauthorizedEvents: SharedFlow<Unit> = _unauthorizedEvents
+
     fun init(context: Context) {
         tokenStore = TokenStore(context.applicationContext)
 
@@ -44,6 +51,10 @@ object ServiceLocator {
 
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor { tokenStore.token() })
+            .addInterceptor(UnauthorizedInterceptor {
+                tokenStore.clear()
+                _unauthorizedEvents.tryEmit(Unit)
+            })
             .addInterceptor(logging)
             .build()
 

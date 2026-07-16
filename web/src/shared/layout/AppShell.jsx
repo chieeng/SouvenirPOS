@@ -44,6 +44,12 @@ const TeamIcon = () => (
     <path d="M11 9.5a3.4 3.4 0 0 1 2.5 3.3" />
   </svg>
 )
+const LockIcon = () => (
+  <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3.5" y="7" width="9" height="6" rx="1.5" />
+    <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+  </svg>
+)
 
 const NAV = [
   { to: '/', label: 'Home', icon: HomeIcon, end: true },
@@ -93,6 +99,14 @@ export default function AppShell({
           ))}
         </div>
 
+        <button
+          className="rail-logout"
+          onClick={() => navigate('/change-password')}
+          title="Change password"
+        >
+          <LockIcon />
+          <span>Password</span>
+        </button>
         <button className="rail-logout" onClick={handleLogout} title="Sign out">
           <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M6 2.5H4A1.5 1.5 0 0 0 2.5 4v8A1.5 1.5 0 0 0 4 13.5h2" />

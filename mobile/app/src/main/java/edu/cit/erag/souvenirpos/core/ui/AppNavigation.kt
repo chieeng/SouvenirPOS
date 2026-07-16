@@ -1,6 +1,7 @@
 package edu.cit.erag.souvenirpos.core.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -33,6 +34,16 @@ fun AppNavigation() {
         else -> Routes.LOGIN
     }
 
+    // A rejected token (expired/revoked/deactivated) clears the session; bounce to login.
+    LaunchedEffect(Unit) {
+        ServiceLocator.unauthorizedEvents.collect {
+            navController.navigate(Routes.LOGIN) {
+                popUpTo(navController.graph.id) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     NavHost(navController = navController, startDestination = start) {
         composable(Routes.LOGIN) {
             LoginScreen(
@@ -47,17 +58,24 @@ fun AppNavigation() {
         composable(Routes.CHANGE_PASSWORD) {
             // Forced when the stored session still carries the must-change flag; otherwise the
             // user reached here voluntarily from the POS menu.
+            val forced = tokenStore.mustChangePassword()
             ChangePasswordScreen(
-                forced = tokenStore.mustChangePassword(),
+                forced = forced,
                 onChanged = {
                     navController.navigate(Routes.POS) {
                         popUpTo(Routes.CHANGE_PASSWORD) { inclusive = true }
                     }
                 },
                 onCancel = {
-                    ServiceLocator.authRepository.logout()
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(navController.graph.id) { inclusive = true }
+                    if (forced) {
+                        // No usable session yet: cancelling signs out.
+                        ServiceLocator.authRepository.logout()
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    } else {
+                        // Voluntary visit: just return to where they came from.
+                        navController.popBackStack()
                     }
                 },
             )

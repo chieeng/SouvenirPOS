@@ -118,7 +118,7 @@ fun ChangePasswordScreen(
             enabled = !viewModel.loading,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(if (forced) "Sign out instead" else "Cancel & sign out")
+            Text(if (forced) "Sign out instead" else "Cancel")
         }
     }
 }

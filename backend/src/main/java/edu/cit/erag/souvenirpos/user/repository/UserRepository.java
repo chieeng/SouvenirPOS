@@ -1,5 +1,6 @@
 package edu.cit.erag.souvenirpos.user.repository;
 
+import edu.cit.erag.souvenirpos.shared.domain.Role;
 import edu.cit.erag.souvenirpos.shared.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -11,4 +12,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
     boolean existsByUsername(String username);
+
+    long countByRoleAndEnabledTrue(Role role);
 }

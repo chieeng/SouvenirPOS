@@ -41,8 +41,14 @@ export default function ChangePasswordPage() {
   }
 
   function handleCancel() {
-    logout()
-    navigate('/login')
+    // Forced users have no session to return to yet, so cancelling signs them out.
+    // Voluntary visitors just go back to the app.
+    if (forced) {
+      logout()
+      navigate('/login')
+    } else {
+      navigate('/')
+    }
   }
 
   return (
@@ -127,7 +133,7 @@ export default function ChangePasswordPage() {
             </button>
 
             <button type="button" className="login-show" onClick={handleCancel} style={{ marginTop: 12 }}>
-              {forced ? 'Sign out instead' : 'Cancel & sign out'}
+              {forced ? 'Sign out instead' : 'Cancel'}
             </button>
           </div>
         </form>
