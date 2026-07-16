@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import AppShell, { initialsOf } from '../../shared/layout/AppShell'
+import { useAuth } from '../../auth/context/AuthContext'
 import client from '../../shared/api/client'
 import '../styles/ManageUsersPage.css'
 
 const AVATAR_COLORS = ['#c98a3a', '#147a6e', '#5c7d8a', '#9a7bb0', '#2f8f5b']
 
 export default function ManageUsersPage() {
+  const { user: currentUser } = useAuth()
   const [users, setUsers] = useState([])
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
@@ -13,6 +15,7 @@ export default function ManageUsersPage() {
   const [role, setRole] = useState('CASHIER')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [busyId, setBusyId] = useState(null)
 
   async function loadUsers() {
     const { data } = await client.get('/users')
@@ -22,6 +25,19 @@ export default function ManageUsersPage() {
   useEffect(() => {
     loadUsers()
   }, [])
+
+  async function toggleEnabled(u) {
+    setError('')
+    setBusyId(u.id)
+    try {
+      await client.post(`/users/${u.id}/${u.enabled ? 'deactivate' : 'reactivate'}`)
+      await loadUsers()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not update account')
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -85,7 +101,7 @@ export default function ManageUsersPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              minLength={6}
+              minLength={8}
               required
             />
 
@@ -121,11 +137,13 @@ export default function ManageUsersPage() {
               <span>Staff</span>
               <span>Username</span>
               <span className="users-right">Role</span>
+              <span className="users-right">Status</span>
             </div>
             {users.map((u, i) => {
               const isOwner = u.role === 'OWNER'
+              const isSelf = currentUser?.id === u.id
               return (
-                <div key={u.id} className="users-row">
+                <div key={u.id} className={`users-row${u.enabled ? '' : ' users-row-disabled'}`}>
                   <span className="users-staff">
                     <span
                       className="users-avatar"
@@ -140,6 +158,20 @@ export default function ManageUsersPage() {
                     <span className={`badge ${isOwner ? 'badge-admin' : 'badge-cashier'}`}>
                       {isOwner ? 'Owner' : 'Cashier'}
                     </span>
+                  </span>
+                  <span className="users-right">
+                    {isSelf ? (
+                      <span className="users-status-muted">You</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={`users-toggle ${u.enabled ? 'is-active' : 'is-inactive'}`}
+                        onClick={() => toggleEnabled(u)}
+                        disabled={busyId === u.id}
+                      >
+                        {busyId === u.id ? '…' : u.enabled ? 'Active · Deactivate' : 'Inactive · Reactivate'}
+                      </button>
+                    )}
                   </span>
                 </div>
               )

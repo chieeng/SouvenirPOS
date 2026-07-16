@@ -11,4 +11,8 @@ class UserRepository(private val api: ApiService) {
 
     /** Creates a cashier/owner account (POST /api/users). Owner-only on the backend. */
     suspend fun createUser(request: UserCreateRequest): UserResponse = api.createUser(request)
+
+    /** Enables or disables an account. Deactivation also revokes its active session. */
+    suspend fun setEnabled(id: Long, enabled: Boolean): UserResponse =
+        if (enabled) api.reactivateUser(id) else api.deactivateUser(id)
 }

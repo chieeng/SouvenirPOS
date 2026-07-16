@@ -23,6 +23,22 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    /**
+     * Monotonic counter embedded in issued tokens. Bumping it (password change, admin
+     * force-logout, deactivation) instantly invalidates every token minted before the bump,
+     * giving server-side revocation without a token blocklist.
+     */
+    @Column(name = "token_version", nullable = false, columnDefinition = "integer default 0")
+    private int tokenVersion = 0;
+
+    /** Disabled accounts cannot log in and their existing tokens are rejected. */
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean enabled = true;
+
+    /** When true the user must set a new password before doing anything else. */
+    @Column(name = "must_change_password", nullable = false, columnDefinition = "boolean default false")
+    private boolean mustChangePassword = false;
+
     public User() {
     }
 
@@ -71,5 +87,34 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public int getTokenVersion() {
+        return tokenVersion;
+    }
+
+    public void setTokenVersion(int tokenVersion) {
+        this.tokenVersion = tokenVersion;
+    }
+
+    /** Invalidates all currently-issued tokens for this user. */
+    public void incrementTokenVersion() {
+        this.tokenVersion++;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 }

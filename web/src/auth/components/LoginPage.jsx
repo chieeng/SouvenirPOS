@@ -17,8 +17,8 @@ export default function LoginPage() {
     setError('')
     setSubmitting(true)
     try {
-      await login(username, password)
-      navigate('/')
+      const loggedIn = await login(username, password)
+      navigate(loggedIn.mustChangePassword ? '/change-password' : '/')
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid username or password')
     } finally {

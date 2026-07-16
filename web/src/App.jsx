@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './auth/routing/ProtectedRoute'
 import LoginPage from './auth/components/LoginPage'
+import ChangePasswordPage from './auth/components/ChangePasswordPage'
 import POSPage from './pos/components/POSPage'
 import ManageUsersPage from './users/components/ManageUsersPage'
 import SalesHistoryPage from './sales-history/components/SalesHistoryPage'
@@ -11,6 +12,9 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      {/* Not wrapped in ProtectedRoute: a must-change user is redirected here, so guarding
+          it with ProtectedRoute would loop. The page checks for a session itself. */}
+      <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route
         path="/"
         element={

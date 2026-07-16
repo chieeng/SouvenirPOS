@@ -8,6 +8,7 @@ import edu.cit.erag.souvenirpos.core.di.ServiceLocator
 import edu.cit.erag.souvenirpos.categories.ui.ManageCategoriesScreen
 import edu.cit.erag.souvenirpos.dashboard.ui.DashboardScreen
 import edu.cit.erag.souvenirpos.history.ui.SalesHistoryScreen
+import edu.cit.erag.souvenirpos.auth.ui.ChangePasswordScreen
 import edu.cit.erag.souvenirpos.auth.ui.LoginScreen
 import edu.cit.erag.souvenirpos.pos.ui.PosScreen
 import edu.cit.erag.souvenirpos.users.ui.ManageUsersScreen
@@ -19,19 +20,44 @@ object Routes {
     const val HISTORY = "history"
     const val DASHBOARD = "dashboard"
     const val CATEGORIES = "categories"
+    const val CHANGE_PASSWORD = "change_password"
 }
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val start = if (ServiceLocator.tokenStore.isLoggedIn()) Routes.POS else Routes.LOGIN
+    val tokenStore = ServiceLocator.tokenStore
+    val start = when {
+        tokenStore.isLoggedIn() && tokenStore.mustChangePassword() -> Routes.CHANGE_PASSWORD
+        tokenStore.isLoggedIn() -> Routes.POS
+        else -> Routes.LOGIN
+    }
 
     NavHost(navController = navController, startDestination = start) {
         composable(Routes.LOGIN) {
             LoginScreen(
-                onLoggedIn = {
-                    navController.navigate(Routes.POS) {
+                onLoggedIn = { mustChangePassword ->
+                    val destination = if (mustChangePassword) Routes.CHANGE_PASSWORD else Routes.POS
+                    navController.navigate(destination) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable(Routes.CHANGE_PASSWORD) {
+            // Forced when the stored session still carries the must-change flag; otherwise the
+            // user reached here voluntarily from the POS menu.
+            ChangePasswordScreen(
+                forced = tokenStore.mustChangePassword(),
+                onChanged = {
+                    navController.navigate(Routes.POS) {
+                        popUpTo(Routes.CHANGE_PASSWORD) { inclusive = true }
+                    }
+                },
+                onCancel = {
+                    ServiceLocator.authRepository.logout()
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(navController.graph.id) { inclusive = true }
                     }
                 },
             )
@@ -47,6 +73,7 @@ fun AppNavigation() {
                 onViewHistory = { navController.navigate(Routes.HISTORY) },
                 onViewDashboard = { navController.navigate(Routes.DASHBOARD) },
                 onManageCategories = { navController.navigate(Routes.CATEGORIES) },
+                onChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) },
             )
         }
         composable(Routes.USERS) {

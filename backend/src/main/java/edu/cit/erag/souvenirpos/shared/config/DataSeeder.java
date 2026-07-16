@@ -55,6 +55,8 @@ public class DataSeeder implements CommandLineRunner {
             String password = generated ? randomPassword() : seedPassword;
 
             User owner = new User("Shop Owner", seedUsername, passwordEncoder.encode(password), Role.OWNER);
+            // Force the initial credential to be replaced on first login (checklist item 7).
+            owner.setMustChangePassword(true);
             userRepository.save(owner);
 
             if (generated) {

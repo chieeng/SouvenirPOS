@@ -30,7 +30,7 @@ class LoginViewModel : ViewModel() {
         error = null
     }
 
-    fun login(onSuccess: () -> Unit) {
+    fun login(onSuccess: (mustChangePassword: Boolean) -> Unit) {
         if (username.isBlank() || password.isBlank()) {
             error = "Enter your username and password"
             return
@@ -39,8 +39,8 @@ class LoginViewModel : ViewModel() {
         error = null
         viewModelScope.launch {
             try {
-                ServiceLocator.authRepository.login(username, password)
-                onSuccess()
+                val response = ServiceLocator.authRepository.login(username, password)
+                onSuccess(response.mustChangePassword)
             } catch (t: Throwable) {
                 error = t.userMessage()
             } finally {

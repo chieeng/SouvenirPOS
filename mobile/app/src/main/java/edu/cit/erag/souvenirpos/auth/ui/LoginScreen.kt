@@ -42,7 +42,7 @@ import edu.cit.erag.souvenirpos.core.ui.theme.TealDark
 
 @Composable
 fun LoginScreen(
-    onLoggedIn: () -> Unit,
+    onLoggedIn: (mustChangePassword: Boolean) -> Unit,
     viewModel: LoginViewModel = viewModel(),
 ) {
     val onBrand = Color(0xFFEAFAF6)

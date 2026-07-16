@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -104,7 +106,7 @@ private fun CreateAccountCard(viewModel: ManageUsersViewModel) {
             OutlinedTextField(
                 value = viewModel.password,
                 onValueChange = viewModel::onPassword,
-                label = { Text("Password (min 6)") },
+                label = { Text("Password (min 8)") },
                 singleLine = true,
                 enabled = !viewModel.creating,
                 visualTransformation = PasswordVisualTransformation(),
@@ -180,14 +182,24 @@ private fun ExistingUsers(viewModel: ManageUsersViewModel) {
         } else {
             viewModel.users.forEachIndexed { index, user ->
                 if (index > 0) HorizontalDivider()
-                UserRow(user)
+                UserRow(
+                    user = user,
+                    isSelf = user.id == viewModel.currentUserId,
+                    toggling = viewModel.togglingId == user.id,
+                    onToggle = { viewModel.toggleEnabled(user) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun UserRow(user: UserResponse) {
+private fun UserRow(
+    user: UserResponse,
+    isSelf: Boolean,
+    toggling: Boolean,
+    onToggle: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -195,9 +207,14 @@ private fun UserRow(user: UserResponse) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(user.name, fontWeight = FontWeight.SemiBold)
             Text(
-                "@${user.username}",
+                user.name,
+                fontWeight = FontWeight.SemiBold,
+                color = if (user.enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.outline,
+            )
+            Text(
+                "@${user.username}" + if (user.enabled) "" else " · inactive",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -211,5 +228,15 @@ private fun UserRow(user: UserResponse) {
             else
                 MaterialTheme.colorScheme.tertiary,
         )
+        if (!isSelf) {
+            Spacer(Modifier.width(8.dp))
+            TextButton(onClick = onToggle, enabled = !toggling) {
+                if (toggling) {
+                    CircularProgressIndicator(modifier = Modifier.height(16.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(if (user.enabled) "Deactivate" else "Reactivate")
+                }
+            }
+        }
     }
 }

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -94,6 +95,7 @@ fun PosScreen(
     onViewHistory: () -> Unit,
     onViewDashboard: () -> Unit,
     onManageCategories: () -> Unit,
+    onChangePassword: () -> Unit,
     viewModel: PosViewModel = viewModel(),
 ) {
     var step by remember { mutableStateOf(PosStep.SELL) }
@@ -111,6 +113,7 @@ fun PosScreen(
             onViewHistory = onViewHistory,
             onViewDashboard = onViewDashboard,
             onManageCategories = onManageCategories,
+            onChangePassword = onChangePassword,
         )
         PosStep.CART -> CartStep(
             viewModel = viewModel,
@@ -143,6 +146,7 @@ private fun SellStep(
     onViewHistory: () -> Unit,
     onViewDashboard: () -> Unit,
     onManageCategories: () -> Unit,
+    onChangePassword: () -> Unit,
 ) {
     Scaffold(
         containerColor = Sand,
@@ -162,6 +166,7 @@ private fun SellStep(
                     onViewHistory = onViewHistory,
                     onManageCategories = onManageCategories,
                     onManageUsers = onManageUsers,
+                    onChangePassword = onChangePassword,
                     onLogout = { viewModel.logout(onLoggedOut) },
                 )
             }
@@ -285,6 +290,7 @@ private fun PosBottomNav(
     onViewHistory: () -> Unit,
     onManageCategories: () -> Unit,
     onManageUsers: () -> Unit,
+    onChangePassword: () -> Unit,
     onLogout: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -336,6 +342,11 @@ private fun PosBottomNav(
                                 onClick = { menuOpen = false; onManageUsers() },
                             )
                         }
+                        DropdownMenuItem(
+                            text = { Text("Change password") },
+                            leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+                            onClick = { menuOpen = false; onChangePassword() },
+                        )
                         DropdownMenuItem(
                             text = { Text("Sign out") },
                             leadingIcon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null) },

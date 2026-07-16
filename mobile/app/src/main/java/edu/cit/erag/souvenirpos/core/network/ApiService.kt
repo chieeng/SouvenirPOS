@@ -2,6 +2,7 @@ package edu.cit.erag.souvenirpos.core.network
 
 import edu.cit.erag.souvenirpos.core.data.model.Category
 import edu.cit.erag.souvenirpos.core.data.model.CategoryCreateRequest
+import edu.cit.erag.souvenirpos.core.data.model.ChangePasswordRequest
 import edu.cit.erag.souvenirpos.core.data.model.LoginRequest
 import edu.cit.erag.souvenirpos.core.data.model.LoginResponse
 import edu.cit.erag.souvenirpos.core.data.model.SaleCreateRequest
@@ -12,6 +13,7 @@ import edu.cit.erag.souvenirpos.core.data.model.UserResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 // Endpoints are relative to BuildConfig.API_BASE_URL, which ends in ".../api/".
@@ -19,6 +21,10 @@ interface ApiService {
 
     @POST("auth/login")
     suspend fun login(@Body body: LoginRequest): LoginResponse
+
+    // Self-service password change; returns a fresh token (the old one is revoked server-side).
+    @POST("auth/change-password")
+    suspend fun changePassword(@Body body: ChangePasswordRequest): LoginResponse
 
     @GET("categories")
     suspend fun categories(): List<Category>
@@ -45,4 +51,11 @@ interface ApiService {
 
     @POST("users")
     suspend fun createUser(@Body body: UserCreateRequest): UserResponse
+
+    // Owner-only: disable/enable an account (deactivation also revokes its active session).
+    @POST("users/{id}/deactivate")
+    suspend fun deactivateUser(@Path("id") id: Long): UserResponse
+
+    @POST("users/{id}/reactivate")
+    suspend fun reactivateUser(@Path("id") id: Long): UserResponse
 }

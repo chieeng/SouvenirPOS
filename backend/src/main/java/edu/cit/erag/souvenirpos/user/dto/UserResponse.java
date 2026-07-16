@@ -8,12 +8,16 @@ public class UserResponse {
     private String name;
     private String username;
     private String role;
+    private boolean enabled;
+    private boolean mustChangePassword;
 
     public UserResponse(User user) {
         this.id = user.getId();
         this.name = user.getName();
         this.username = user.getUsername();
         this.role = user.getRole().name();
+        this.enabled = user.isEnabled();
+        this.mustChangePassword = user.isMustChangePassword();
     }
 
     public Long getId() {
@@ -30,5 +34,13 @@ public class UserResponse {
 
     public String getRole() {
         return role;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
     }
 }

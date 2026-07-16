@@ -18,12 +18,15 @@ class TokenStore(context: Context) {
             .putString(KEY_NAME, login.name)
             .putString(KEY_USERNAME, login.username)
             .putString(KEY_ROLE, login.role)
+            .putBoolean(KEY_MUST_CHANGE, login.mustChangePassword)
             .apply()
     }
 
     fun token(): String? = prefs.getString(KEY_TOKEN, null)
+    fun userId(): Long = prefs.getLong(KEY_USER_ID, -1L)
     fun name(): String? = prefs.getString(KEY_NAME, null)
     fun role(): String? = prefs.getString(KEY_ROLE, null)
+    fun mustChangePassword(): Boolean = prefs.getBoolean(KEY_MUST_CHANGE, false)
     fun isLoggedIn(): Boolean = !token().isNullOrBlank()
 
     fun clear() = prefs.edit().clear().apply()
@@ -35,5 +38,6 @@ class TokenStore(context: Context) {
         const val KEY_NAME = "name"
         const val KEY_USERNAME = "username"
         const val KEY_ROLE = "role"
+        const val KEY_MUST_CHANGE = "must_change_password"
     }
 }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 class ManageUsersViewModel : ViewModel() {
 
     private val repo = ServiceLocator.userRepository
+    val currentUserId: Long = ServiceLocator.tokenStore.userId()
 
     var users by mutableStateOf<List<UserResponse>>(emptyList())
         private set
@@ -32,6 +33,8 @@ class ManageUsersViewModel : ViewModel() {
     var error by mutableStateOf<String?>(null)
         private set
     var success by mutableStateOf<String?>(null)
+        private set
+    var togglingId by mutableStateOf<Long?>(null)
         private set
 
     init {
@@ -64,8 +67,8 @@ class ManageUsersViewModel : ViewModel() {
             error = "Fill in name, username, and password"
             return
         }
-        if (password.length < 6) {
-            error = "Password must be at least 6 characters"
+        if (password.length < 8) {
+            error = "Password must be at least 8 characters"
             return
         }
         creating = true
@@ -85,6 +88,23 @@ class ManageUsersViewModel : ViewModel() {
                 error = t.userMessage()
             } finally {
                 creating = false
+            }
+        }
+    }
+
+    fun toggleEnabled(user: UserResponse) {
+        togglingId = user.id
+        clearBanners()
+        viewModelScope.launch {
+            try {
+                val updated = repo.setEnabled(user.id, !user.enabled)
+                success = if (updated.enabled) "Reactivated ${updated.username}"
+                else "Deactivated ${updated.username}"
+                loadUsers()
+            } catch (t: Throwable) {
+                error = t.userMessage()
+            } finally {
+                togglingId = null
             }
         }
     }

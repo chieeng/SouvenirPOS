@@ -6,24 +6,40 @@ const AuthContext = createContext(null)
 const STORAGE_KEY = 'souvenirpos_token'
 const USER_KEY = 'souvenirpos_user'
 
+function userFromResponse(data) {
+  return {
+    id: data.userId,
+    name: data.name,
+    username: data.username,
+    role: data.role,
+    mustChangePassword: data.mustChangePassword,
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem(USER_KEY)
     return stored ? JSON.parse(stored) : null
   })
 
-  async function login(username, password) {
-    const { data } = await client.post('/auth/login', { username, password })
+  function persist(data) {
     localStorage.setItem(STORAGE_KEY, data.token)
-    const loggedInUser = {
-      id: data.userId,
-      name: data.name,
-      username: data.username,
-      role: data.role,
-    }
+    const loggedInUser = userFromResponse(data)
     localStorage.setItem(USER_KEY, JSON.stringify(loggedInUser))
     setUser(loggedInUser)
     return loggedInUser
+  }
+
+  async function login(username, password) {
+    const { data } = await client.post('/auth/login', { username, password })
+    return persist(data)
+  }
+
+  // Changing the password returns a fresh token (the old one is now revoked server-side)
+  // and clears the must-change flag.
+  async function changePassword(currentPassword, newPassword) {
+    const { data } = await client.post('/auth/change-password', { currentPassword, newPassword })
+    return persist(data)
   }
 
   function logout() {
@@ -33,7 +49,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, changePassword, logout }}>
       {children}
     </AuthContext.Provider>
   )

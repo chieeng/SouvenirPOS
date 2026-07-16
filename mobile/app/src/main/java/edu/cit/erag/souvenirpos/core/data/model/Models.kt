@@ -14,6 +14,12 @@ data class LoginResponse(
     val name: String,
     val username: String,
     val role: String,
+    val mustChangePassword: Boolean = false,
+)
+
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String,
 )
 
 data class Category(
@@ -30,6 +36,8 @@ data class UserResponse(
     val name: String,
     val username: String,
     val role: String,
+    val enabled: Boolean = true,
+    val mustChangePassword: Boolean = false,
 )
 
 data class UserCreateRequest(

@@ -24,12 +24,13 @@ public class JwtService {
         this.expirationMs = expirationMs;
     }
 
-    public String generateToken(String username, String role) {
+    public String generateToken(String username, String role, int tokenVersion) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
         return Jwts.builder()
                 .subject(username)
                 .claim("role", role)
+                .claim("tv", tokenVersion)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)
@@ -42,6 +43,11 @@ public class JwtService {
 
     public String extractRole(String token) {
         return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
+    /** Returns the token's version claim, or null for legacy tokens issued without one. */
+    public Integer extractTokenVersion(String token) {
+        return extractClaim(token, claims -> claims.get("tv", Integer.class));
     }
 
     public boolean isTokenValid(String token, String username) {

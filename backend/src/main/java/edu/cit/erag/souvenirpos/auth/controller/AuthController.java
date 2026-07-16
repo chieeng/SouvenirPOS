@@ -1,17 +1,20 @@
 package edu.cit.erag.souvenirpos.auth.controller;
 
+import edu.cit.erag.souvenirpos.auth.dto.ChangePasswordRequest;
 import edu.cit.erag.souvenirpos.auth.dto.LoginRequest;
 import edu.cit.erag.souvenirpos.auth.dto.LoginResponse;
 import edu.cit.erag.souvenirpos.shared.domain.User;
 import edu.cit.erag.souvenirpos.shared.exception.TooManyLoginAttemptsException;
 import edu.cit.erag.souvenirpos.shared.security.LoginRateLimiter;
 import edu.cit.erag.souvenirpos.user.repository.UserRepository;
+import edu.cit.erag.souvenirpos.user.service.UserService;
 import edu.cit.erag.souvenirpos.shared.security.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,15 +28,18 @@ public class AuthController {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final LoginRateLimiter loginRateLimiter;
+    private final UserService userService;
 
     public AuthController(AuthenticationManager authenticationManager,
                           UserRepository userRepository,
                           JwtService jwtService,
-                          LoginRateLimiter loginRateLimiter) {
+                          LoginRateLimiter loginRateLimiter,
+                          UserService userService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.loginRateLimiter = loginRateLimiter;
+        this.userService = userService;
     }
 
     @PostMapping("/login")
@@ -59,9 +65,23 @@ public class AuthController {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
 
-        String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
+        return loginResponseFor(user);
+    }
 
-        return new LoginResponse(token, user.getId(), user.getName(), user.getUsername(), user.getRole().name());
+    @PostMapping("/change-password")
+    public LoginResponse changePassword(@Valid @RequestBody ChangePasswordRequest request,
+                                        Authentication authentication) {
+        User updated = userService.changePassword(
+                authentication.getName(), request.getCurrentPassword(), request.getNewPassword());
+        // Changing the password bumped the token version, invalidating the caller's current
+        // token; return a fresh one so the client stays signed in seamlessly.
+        return loginResponseFor(updated);
+    }
+
+    private LoginResponse loginResponseFor(User user) {
+        String token = jwtService.generateToken(user.getUsername(), user.getRole().name(), user.getTokenVersion());
+        return new LoginResponse(token, user.getId(), user.getName(), user.getUsername(),
+                user.getRole().name(), user.isMustChangePassword());
     }
 
     private static String clientIp(HttpServletRequest request) {
