@@ -72,8 +72,9 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint()))
                 .authorizeHttpRequests(auth -> auth
-                        // Only login is anonymous; everything else (incl. /api/auth/change-password)
-                        // requires a valid token.
+                        // Public: the health/landing endpoint and login. Everything else
+                        // (incl. /api/auth/change-password) requires a valid token.
+                        .requestMatchers("/", "/health").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
                         .anyRequest().authenticated()
                 )
