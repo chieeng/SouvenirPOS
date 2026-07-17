@@ -1,0 +1,59 @@
+========================================================================
+ SouvenirPOS — Database / API Connection Proof
+========================================================================
+Captured: 2026-07-04
+Backend:  Spring Boot 4.1.0 (Java 17), running on http://localhost:8080
+Database: Supabase (PostgreSQL 17.6), via the connection pooler on port 6543
+
+What this proves
+----------------
+On startup, the backend establishes a LIVE JDBC connection to the
+Supabase PostgreSQL database (not a mock/in-memory DB). The log below is
+produced by HikariCP (the connection pool) and Hibernate reporting the
+real database it connected to — the JDBC URL, driver, dialect, and the
+server's reported version (17.6) can only be obtained from an actual
+live connection.
+
+Backend startup log excerpt (verbatim)
+--------------------------------------
+2026-07-04T22:10:12.606+08:00  INFO --- [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting...
+2026-07-04T22:10:16.707+08:00  INFO --- [main] com.zaxxer.hikari.pool.HikariPool  : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@651caa2e
+2026-07-04T22:10:16.708+08:00  INFO --- [main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Start completed.
+
+    Database JDBC URL [jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?prepareThreshold=0]
+    Database driver : PostgreSQL JDBC Driver
+    Database dialect: PostgreSQLDialect
+    Database version: 17.6
+    Default catalog/schema: postgres/public
+
+2026-07-04T22:10:27.305+08:00  INFO --- [main] o.s.boot.tomcat.TomcatWebServer    : Tomcat started on port 8080 (http) with context path '/'
+2026-07-04T22:10:27.312+08:00  INFO --- [main] e.c.e.s.SouvenirposApplication     : Started SouvenirposApplication in 17.739 seconds (process running for 18.207)
+
+On first startup Hibernate also created the schema and the app seeded
+its data, confirming write access to the database:
+    - create table categories (...)
+    - create table sales (...)
+    - create table sale_items (...)
+    - insert into categories (name) values (?)   x16 default categories
+
+Where the connection is configured in the project
+--------------------------------------------------
+Database (backend -> Supabase):
+    backend/src/main/resources/application-local.properties      (real URL + credentials; gitignored)
+    backend/src/main/resources/application-local.properties.example  (committed template)
+    backend/pom.xml                                              (org.postgresql:postgresql JDBC driver)
+    backend/src/main/java/edu/cit/erag/souvenirpos/repository/   (Spring Data JPA repositories use the DataSource)
+
+API (clients -> backend):
+    web/src/api/client.js                                        (axios baseURL '/api')
+    web/vite.config.js                                           (dev proxy -> http://localhost:8080)
+    mobile/.../data/network/ApiService.kt                        (Retrofit endpoints)
+    mobile/app/build.gradle.kts                                  (API_BASE_URL = http://10.0.2.2:8080/api/)
+
+Note
+----
+A later "HikariPool-1 - Failed to validate connection ... This connection
+has been closed" WARN line (if present in the full log) is NOT an error:
+it is the Supabase pooler dropping an idle connection, which HikariCP
+detects and replaces automatically.
+========================================================================

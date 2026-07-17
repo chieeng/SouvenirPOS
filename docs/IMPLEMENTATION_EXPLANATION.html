@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SouvenirPOS — Implementation Explanation</title>
+<style>
+  @page { size: A4; margin: 2.2cm 2cm; }
+  body { font-family: "Calibri", "Segoe UI", Arial, sans-serif; color: #1c1c1c; font-size: 11pt; line-height: 1.45; }
+  h1 { font-size: 19pt; color: #0f5e55; margin: 0 0 4pt; }
+  h2 { font-size: 13.5pt; color: #0f5e55; border-bottom: 1.5pt solid #147a6e; padding-bottom: 3pt; margin: 20pt 0 8pt; }
+  h3 { font-size: 11.5pt; color: #26241f; margin: 13pt 0 5pt; }
+  p { margin: 6pt 0; }
+  .meta { font-size: 10.5pt; color: #444; margin: 2pt 0; }
+  .meta strong { color: #26241f; }
+  hr { border: none; border-top: 0.75pt solid #ccc; margin: 12pt 0; }
+  table { border-collapse: collapse; width: 100%; margin: 8pt 0; font-size: 9.5pt; }
+  th, td { border: 0.75pt solid #b9b3a8; padding: 5pt 7pt; text-align: left; vertical-align: top; }
+  th { background: #e4f0ee; color: #0f5e55; font-weight: 700; }
+  code { font-family: "Consolas", "Courier New", monospace; font-size: 9.5pt; background: #f2efe9; padding: 1pt 3pt; border-radius: 3px; }
+  ul { margin: 6pt 0; padding-left: 20pt; }
+  li { margin: 3pt 0; }
+  .lead { color: #444; font-size: 10.5pt; }
+  .tag { display: inline-block; font-family: "Consolas", monospace; font-size: 8.5pt; color: #0f5e55; background: #e4f0ee; border: 0.5pt solid #bfe0da; padding: 0 5pt; border-radius: 8pt; }
+</style>
+</head>
+<body>
+
+<h1>SouvenirPOS — Implementation Explanation</h1>
+<p class="meta"><strong>Course:</strong> IT342-G01 — Systems Integration and Architecture 1</p>
+<p class="meta"><strong>Project:</strong> SouvenirPOS – A Cross-Platform Sales Point-of-Sale System for Souvenir Shops</p>
+<p class="meta"><strong>Prepared by:</strong> Ritchie Jay D. Erag</p>
+<p class="meta"><strong>Core Feature:</strong> Process Sale (Record a Sale Transaction)</p>
+<p class="meta"><strong>Repository:</strong> https://github.com/chieeng/SouvenirPOS</p>
+
+<hr>
+
+<p class="lead">This document explains the implementation of the system's core feature — <strong>Process Sale</strong> — by identifying the source-code components involved, the responsibility of each, and the validation and error-handling mechanisms that keep the sale data correct and secure. The architecture follows the SRS: the Spring Boot backend is the single source of truth (NFR-011), and both the ReactJS web app and the Android Kotlin app call the same REST API.</p>
+
+<h2>1. Relevant Files, Classes, Functions/Methods, and Components</h2>
+
+<h3>1.1 Backend — Spring Boot (source of truth)</h3>
+<table>
+<thead><tr><th>Component</th><th>File</th><th>Key methods / members</th></tr></thead>
+<tbody>
+<tr><td><code>SaleController</code> <span class="tag">@RestController</span></td><td><code>backend/.../sale/controller/SaleController.java</code></td><td><code>createSale(SaleCreateRequest)</code> → <code>POST /api/sales</code>; <code>listSales(LocalDate)</code> → <code>GET /api/sales</code>; <code>summary()</code> → <code>GET /api/sales/summary</code>; <code>getSale(Long)</code> → <code>GET /api/sales/{id}</code></td></tr>
+<tr><td><code>SaleService</code> <span class="tag">@Service</span></td><td><code>backend/.../sale/service/SaleService.java</code></td><td><code>createSale(...)</code> (<code>@Transactional</code>), <code>listSales(date)</code>, <code>getSale(id)</code>, <code>summary()</code>, private <code>currentUser()</code></td></tr>
+<tr><td><code>Sale</code> <span class="tag">@Entity</span></td><td><code>backend/.../shared/domain/Sale.java</code></td><td>Fields <code>saleDateTime</code>, <code>cashier</code>, <code>totalAmount</code>, <code>paymentAmount</code>, <code>changeAmount</code>, <code>items</code>; helper <code>addItem(SaleItem)</code></td></tr>
+<tr><td><code>SaleItem</code> <span class="tag">@Entity</span></td><td><code>backend/.../shared/domain/SaleItem.java</code></td><td>Fields <code>category</code>, <code>quantity</code>, <code>unitPrice</code>, <code>subtotal</code></td></tr>
+<tr><td><code>SaleRepository</code></td><td><code>backend/.../sale/repository/SaleRepository.java</code></td><td><code>save()</code>, <code>findById()</code>, <code>findAllByOrderBySaleDateTimeDesc()</code>, <code>findBySaleDateTimeBetweenOrderBySaleDateTimeDesc(...)</code></td></tr>
+<tr><td><code>SaleCreateRequest</code> (DTO)</td><td><code>backend/.../sale/dto/SaleCreateRequest.java</code></td><td><code>items</code> (<code>@NotEmpty @Valid</code>), <code>paymentAmount</code> (<code>@NotNull</code>)</td></tr>
+<tr><td><code>SaleItemRequest</code> (DTO)</td><td><code>backend/.../sale/dto/SaleItemRequest.java</code></td><td><code>categoryId</code> (<code>@NotNull</code>), <code>quantity</code> (<code>@Min(1)</code>), <code>unitPrice</code> (<code>@NotNull @DecimalMin("0.01")</code>)</td></tr>
+<tr><td><code>SaleResponse</code> / <code>SaleItemResponse</code></td><td><code>backend/.../sale/dto/</code></td><td>Serialize the saved sale (id, dateTime, cashierName, totals, line items) for the receipt</td></tr>
+<tr><td><code>CategoryRepository</code></td><td><code>backend/.../category/repository/CategoryRepository.java</code></td><td><code>findById(categoryId)</code> — validates each line's category (FR-005)</td></tr>
+<tr><td><code>GlobalExceptionHandler</code> <span class="tag">@RestControllerAdvice</span></td><td><code>backend/.../shared/exception/GlobalExceptionHandler.java</code></td><td>Maps exceptions to HTTP status + JSON message</td></tr>
+<tr><td><code>JwtAuthFilter</code>, <code>JwtService</code>, <code>SecurityConfig</code>, <code>CustomUserDetailsService</code></td><td><code>backend/.../shared/security/</code></td><td>Validate JWT on every <code>/api/**</code> request and load the authenticated cashier</td></tr>
+</tbody>
+</table>
+
+<h3>1.2 Web client — ReactJS</h3>
+<table>
+<thead><tr><th>Component</th><th>File</th><th>Key functions / state</th></tr></thead>
+<tbody>
+<tr><td><code>POSPage</code></td><td><code>web/src/pos/components/POSPage.jsx</code></td><td>State: <code>categories</code>, <code>category</code>, <code>priceInput</code>, <code>quantity</code>, <code>cart</code>, <code>payment</code>, <code>receipt</code>. Functions: <code>handleNumpadPress()</code>, <code>adjustQuantity()</code>, <code>handleAddToCart()</code>, <code>handlePaymentChange()</code>, <code>handleCheckout()</code></td></tr>
+<tr><td><code>client</code> (Axios instance)</td><td><code>web/src/shared/api/client.js</code></td><td><code>baseURL: '/api'</code>; request interceptor adds <code>Authorization: Bearer &lt;token&gt;</code></td></tr>
+<tr><td><code>AuthContext</code></td><td><code>web/src/auth/context/AuthContext.jsx</code></td><td><code>login()</code>, <code>logout()</code>, holds JWT + current user</td></tr>
+</tbody>
+</table>
+
+<h3>1.3 Mobile client — Android Kotlin / Jetpack Compose</h3>
+<table>
+<thead><tr><th>Component</th><th>File</th><th>Key functions / state</th></tr></thead>
+<tbody>
+<tr><td><code>PosScreen</code> (Composable)</td><td><code>mobile/.../pos/ui/PosScreen.kt</code></td><td>Three steps — Sell / Cart / Payment; composables <code>Keypad</code>, <code>Stepper</code>, <code>CategoryChip</code>, <code>ReceiptDialog</code></td></tr>
+<tr><td><code>PosViewModel</code></td><td><code>mobile/.../pos/viewmodel/PosViewModel.kt</code></td><td>State: <code>categories</code>, <code>priceInput</code>, <code>quantity</code>, <code>cart</code> (<code>CartLine</code>), <code>payment</code>. Functions: <code>onNumpad()</code>, <code>incQuantity()/decQuantity()</code>, <code>addToCart()</code>, <code>onPaymentNumpad()</code>, <code>checkout()</code>; computed <code>total</code>, <code>change</code>, <code>canCheckout</code></td></tr>
+<tr><td><code>PosRepository</code></td><td><code>mobile/.../pos/data/PosRepository.kt</code></td><td><code>categories()</code>, <code>createSale(SaleCreateRequest)</code></td></tr>
+<tr><td><code>ApiService</code> (Retrofit)</td><td><code>mobile/.../core/network/ApiService.kt</code></td><td><code>@POST("sales")</code>, <code>@GET("categories")</code>, etc.</td></tr>
+<tr><td><code>AuthInterceptor</code></td><td><code>mobile/.../core/network/AuthInterceptor.kt</code></td><td>Adds the JWT header to every outgoing request</td></tr>
+</tbody>
+</table>
+
+<h2>2. Responsibilities of Each Code Component</h2>
+<ul>
+<li><strong><code>SaleController</code></strong> — Thin HTTP layer. Receives the sale request, triggers Bean Validation with <code>@Valid</code>, delegates to <code>SaleService</code>, and returns <code>201 Created</code> with the saved sale. It contains no business logic.</li>
+<li><strong><code>SaleService.createSale()</code></strong> — The heart of the feature and the authoritative business logic. It (1) resolves the authenticated cashier via <code>currentUser()</code> and attaches it to the sale (BR-004); (2) loops the request lines, loads each <code>Category</code>, and computes <code>subtotal = unitPrice × quantity</code> and the running <code>total</code> using <code>BigDecimal</code> at 2 decimals (FR-008, BR-007); (3) verifies <code>payment ≥ total</code> (BR-003) and computes <code>change = payment − total</code> (FR-009); (4) saves the whole graph in one transaction (FR-011).</li>
+<li><strong><code>Sale</code> / <code>SaleItem</code> entities</strong> — Map the object model to the <code>sales</code> and <code>sale_items</code> tables. <code>Sale</code> owns a cascaded list of <code>SaleItem</code>s (one-to-many) and requires a non-null <code>cashier</code> (BR-004); <code>SaleItem</code> permanently stores the price entered at sale time (BR-005). Money columns are <code>precision 12, scale 2</code> (BR-007).</li>
+<li><strong><code>SaleRepository</code></strong> — Spring Data JPA persistence; generates INSERT/SELECT SQL and exposes the derived queries used for history and the dashboard.</li>
+<li><strong><code>SaleCreateRequest</code> / <code>SaleItemRequest</code></strong> — Define the request contract and carry the declarative validation rules (see §3). They decouple the API from the entities.</li>
+<li><strong><code>SaleResponse</code> / <code>SaleItemResponse</code></strong> — Shape the outgoing JSON used by both clients to render the digital receipt (FR-010) and history/detail views.</li>
+<li><strong>Security classes</strong> — <code>JwtAuthFilter</code> validates the bearer token on each request and populates the <code>SecurityContext</code>; <code>SecurityConfig</code> permits only <code>/api/auth/login</code> anonymously and protects everything else (BR-001, NFR-004); <code>JwtService</code> issues/parses tokens; <code>CustomUserDetailsService</code> loads users for authentication.</li>
+<li><strong><code>POSPage</code> (web) / <code>PosScreen</code> + <code>PosViewModel</code> (mobile)</strong> — Presentation and interaction. They gather the cashier's input (category, price via keypad, quantity, payment), keep the cart in local UI state, do lightweight pre-validation for a smooth UX, send the checkout request, and display the returned receipt. They treat the server's computed values as authoritative.</li>
+<li><strong><code>client</code> / <code>ApiService</code> + interceptors</strong> — Networking layer that attaches the JWT and (de)serializes JSON between the clients and the API.</li>
+</ul>
+
+<h2>3. Validation and Error-Handling Mechanisms</h2>
+
+<h3>3.1 Client-side (usability, first line)</h3>
+<ul>
+<li><strong>Add-line guard.</strong> A line is only added when a category is selected, the price parses to &gt; 0, and quantity ≥ 1 (<code>handleAddToCart()</code> / <code>PosViewModel.addToCart()</code>); otherwise a message is shown and nothing is added.</li>
+<li><strong>Checkout guard.</strong> The Checkout button is disabled until the cart is non-empty and cash tendered ≥ total (web: <code>disabled={cart.length === 0 || paymentAmount &lt; total}</code>; mobile: <code>canCheckout</code>). This mirrors BR-002 and BR-003 before any request is sent.</li>
+<li><strong>Input sanitisation.</strong> The keypad and payment fields only accept digits and a single decimal point.</li>
+</ul>
+
+<h3>3.2 Server-side (authoritative, NFR-011)</h3>
+<ul>
+<li><strong>Bean Validation</strong> (triggered by <code>@Valid</code> on the controller): <code>@NotEmpty</code> on <code>items</code> enforces "at least one line item" (BR-002); <code>@Min(1)</code> on <code>quantity</code> enforces FR-007; <code>@DecimalMin("0.01")</code> on <code>unitPrice</code> rejects zero/negative prices; <code>@NotNull</code> guards <code>categoryId</code> and <code>paymentAmount</code>.</li>
+<li><strong>Business-rule checks in <code>SaleService</code>:</strong> the category id is looked up and an unknown id throws an error; <code>payment ≥ total</code> is re-checked on the server (BR-003) regardless of the client; the cashier is required from the security context (BR-004).</li>
+<li><strong>Recomputation, not trust.</strong> Totals, subtotals, and change are always recomputed on the server from unit price × quantity, so tampered client totals cannot affect the stored record (FR-008/009).</li>
+<li><strong>Transactional integrity.</strong> <code>createSale()</code> is <code>@Transactional</code>; if any line fails validation or persistence, the whole sale is rolled back and nothing is saved — no partial sales (supports NFR-007).</li>
+<li><strong>Immutability.</strong> There is no update or delete endpoint for sales, so a completed sale can only be read afterwards (BR-008).</li>
+</ul>
+
+<h3>3.3 Centralised error handling — <code>GlobalExceptionHandler</code> (<code>@RestControllerAdvice</code>)</h3>
+<table>
+<thead><tr><th>Exception</th><th>HTTP status</th><th>Body / meaning</th></tr></thead>
+<tbody>
+<tr><td><code>MethodArgumentNotValidException</code> (Bean Validation)</td><td><code>400 Bad Request</code></td><td>Map of <code>field → message</code> (e.g. "Quantity must be at least 1")</td></tr>
+<tr><td><code>IllegalArgumentException</code> (payment &lt; total, category not found, no authenticated user)</td><td><code>400 Bad Request</code></td><td><code>{ "message": "..." }</code> — the specific reason</td></tr>
+<tr><td><code>BadCredentialsException</code></td><td><code>401 Unauthorized</code></td><td>Wrong username/password on login</td></tr>
+<tr><td><code>AccessDeniedException</code></td><td><code>403 Forbidden</code></td><td>Non-owner attempting an owner-only action (RBAC, FR-017)</td></tr>
+<tr><td>Missing/invalid/expired JWT (Spring Security entry point)</td><td><code>401 Unauthorized</code></td><td>Unauthenticated request to a protected endpoint (BR-001, NFR-004, NFR-013)</td></tr>
+</tbody>
+</table>
+<p>Both clients read the returned message and surface it to the user (e.g. the web POS shows it in <code>error</code>, the mobile POS in <code>viewModel.error</code>), and the sale is <strong>not</strong> recorded. This gives consistent, predictable failure behaviour across web and mobile.</p>
+
+</body>
+</html>
