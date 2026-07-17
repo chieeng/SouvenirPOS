@@ -13,6 +13,10 @@ class PosRepository(private val api: ApiService) {
     /** Records a completed sale (POST /api/sales); the backend computes totals/change. */
     suspend fun createSale(request: SaleCreateRequest): SaleResponse = api.createSale(request)
 
-    /** Sales history, newest first (GET /api/sales); an ISO date filters to one day. */
-    suspend fun listSales(date: String? = null): List<SaleResponse> = api.sales(date)
+    /**
+     * Sales history, newest first (GET /api/sales). Pass `from` alone for a single day or
+     * both `from` and `to` for an inclusive date range (FR-013); omit both for all sales.
+     */
+    suspend fun listSales(from: String? = null, to: String? = null): List<SaleResponse> =
+        api.sales(from, to)
 }

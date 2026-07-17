@@ -40,10 +40,13 @@ interface ApiService {
     @GET("sales/summary")
     suspend fun salesSummary(): SaleSummaryResponse
 
-    // Sales history (FR-012). Optional ?date=YYYY-MM-DD filters to one day (FR-013);
-    // a null date omits the query param and returns all sales, newest first.
+    // Sales history (FR-012). Optional ?from=&to= filters a date range (FR-013); passing
+    // only `from` filters that single day. Null params are omitted, returning all sales.
     @GET("sales")
-    suspend fun sales(@Query("date") date: String? = null): List<SaleResponse>
+    suspend fun sales(
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null,
+    ): List<SaleResponse>
 
     // Owner-only on the backend (@PreAuthorize("hasRole('OWNER')")); a cashier token gets a 403.
     @GET("users")

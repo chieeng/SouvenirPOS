@@ -19,9 +19,16 @@ class SalesHistoryViewModel : ViewModel() {
     var sales by mutableStateOf<List<SaleResponse>>(emptyList())
         private set
 
-    /** Active date filter as an ISO date (yyyy-MM-dd), or null for "all sales" (FR-013). */
-    var date by mutableStateOf<String?>(null)
+    /**
+     * Active date-range filter as ISO dates (yyyy-MM-dd), or null for "all sales" (FR-013).
+     * `from` alone means a single day; `from`+`to` means an inclusive range.
+     */
+    var from by mutableStateOf<String?>(null)
         private set
+    var to by mutableStateOf<String?>(null)
+        private set
+
+    val hasFilter: Boolean get() = from != null || to != null
     var loading by mutableStateOf(false)
         private set
     var error by mutableStateOf<String?>(null)
@@ -45,8 +52,15 @@ class SalesHistoryViewModel : ViewModel() {
         }
     }
 
-    fun applyDateFilter(newDate: String?) {
-        date = newDate
+    fun applyRange(newFrom: String?, newTo: String?) {
+        from = newFrom
+        to = newTo
+        load()
+    }
+
+    fun clearFilter() {
+        from = null
+        to = null
         load()
     }
 
@@ -60,7 +74,7 @@ class SalesHistoryViewModel : ViewModel() {
         error = null
         viewModelScope.launch {
             try {
-                sales = repo.listSales(date)
+                sales = repo.listSales(from, to)
             } catch (t: Throwable) {
                 error = t.userMessage()
             } finally {

@@ -19,8 +19,8 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -32,7 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,7 +55,7 @@ fun SalesHistoryScreen(
     onBack: () -> Unit,
     viewModel: SalesHistoryViewModel = viewModel(),
 ) {
-    var showDatePicker by remember { mutableStateOf(false) }
+    var showRangePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -89,9 +89,10 @@ fun SalesHistoryScreen(
                 .padding(padding),
         ) {
             FilterBar(
-                date = viewModel.date,
-                onPickDate = { showDatePicker = true },
-                onShowAll = { viewModel.applyDateFilter(null) },
+                from = viewModel.from,
+                to = viewModel.to,
+                onPick = { showRangePicker = true },
+                onShowAll = { viewModel.clearFilter() },
             )
 
             when {
@@ -113,7 +114,7 @@ fun SalesHistoryScreen(
 
                 viewModel.sales.isEmpty() -> CenteredBox {
                     Text(
-                        if (viewModel.date != null) "No sales on this date." else "No sales recorded yet.",
+                        if (viewModel.hasFilter) "No sales in this range." else "No sales recorded yet.",
                         color = MaterialTheme.colorScheme.outline,
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -134,12 +135,12 @@ fun SalesHistoryScreen(
         }
     }
 
-    if (showDatePicker) {
-        SaleDatePicker(
-            onDismiss = { showDatePicker = false },
-            onDateSelected = { iso ->
-                showDatePicker = false
-                viewModel.applyDateFilter(iso)
+    if (showRangePicker) {
+        SaleRangePicker(
+            onDismiss = { showRangePicker = false },
+            onRangeSelected = { fromIso, toIso ->
+                showRangePicker = false
+                viewModel.applyRange(fromIso, toIso)
             },
         )
     }
@@ -150,7 +151,7 @@ fun SalesHistoryScreen(
 }
 
 @Composable
-private fun FilterBar(date: String?, onPickDate: () -> Unit, onShowAll: () -> Unit) {
+private fun FilterBar(from: String?, to: String?, onPick: () -> Unit, onShowAll: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -158,12 +159,18 @@ private fun FilterBar(date: String?, onPickDate: () -> Unit, onShowAll: () -> Un
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        OutlinedButton(onClick = onPickDate) {
+        OutlinedButton(onClick = onPick) {
             Icon(Icons.Filled.DateRange, contentDescription = null, modifier = Modifier.height(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text(date ?: "Filter by date")
+            Text(
+                when {
+                    from != null && to != null -> "$from  →  $to"
+                    from != null -> from
+                    else -> "Filter by date"
+                },
+            )
         }
-        if (date != null) {
+        if (from != null || to != null) {
             TextButton(onClick = onShowAll) { Text("Show all") }
         }
     }
@@ -203,19 +210,24 @@ private fun SaleRow(sale: SaleResponse, onClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SaleDatePicker(onDismiss: () -> Unit, onDateSelected: (String) -> Unit) {
-    val state = rememberDatePickerState()
+private fun SaleRangePicker(onDismiss: () -> Unit, onRangeSelected: (String, String?) -> Unit) {
+    val state = rememberDateRangePickerState()
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
                 onClick = {
-                    val millis = state.selectedDateMillis
-                    if (millis != null) {
-                        // The picker reports UTC midnight; read the calendar date back in UTC
-                        // so the day the user tapped is the day we filter on.
-                        val iso = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate().toString()
-                        onDateSelected(iso)
+                    val startMillis = state.selectedStartDateMillis
+                    if (startMillis != null) {
+                        // The picker reports UTC midnight; read dates back in UTC so the days
+                        // the user tapped are the days we filter on. A missing end means a
+                        // single-day filter (the backend treats `from` alone as one day).
+                        val fromIso = Instant.ofEpochMilli(startMillis)
+                            .atZone(ZoneOffset.UTC).toLocalDate().toString()
+                        val toIso = state.selectedEndDateMillis?.let {
+                            Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate().toString()
+                        }
+                        onRangeSelected(fromIso, toIso)
                     } else {
                         onDismiss()
                     }
@@ -224,7 +236,7 @@ private fun SaleDatePicker(onDismiss: () -> Unit, onDateSelected: (String) -> Un
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     ) {
-        DatePicker(state = state)
+        DateRangePicker(state = state, modifier = Modifier.height(480.dp))
     }
 }
 
