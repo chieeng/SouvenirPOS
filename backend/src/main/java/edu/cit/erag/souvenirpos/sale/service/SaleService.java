@@ -102,7 +102,10 @@ public class SaleService {
 
     @Transactional(readOnly = true)
     public Sale getSale(Long id) {
-        return saleRepository.findById(id)
+        // findWithItemsById eager-fetches items/cashier so the controller can map to a
+        // SaleResponse after this transaction closes (open-in-view=false) without a
+        // LazyInitializationException.
+        return saleRepository.findWithItemsById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Sale not found: " + id));
     }
 
