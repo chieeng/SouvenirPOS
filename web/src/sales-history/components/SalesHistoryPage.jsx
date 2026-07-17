@@ -37,20 +37,26 @@ function itemSummary(items) {
 
 export default function SalesHistoryPage() {
   const [sales, setSales] = useState([])
-  const [date, setDate] = useState('') // '' = all dates (FR-013 filter)
+  // FR-013: '' = unbounded. Set only `from` for a single day, or both for a range.
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selected, setSelected] = useState(null) // sale shown in the detail modal (FR-014)
 
-  // FR-012: list past sales, optionally filtered by date (GET /api/sales[?date=]).
-  // `silent` skips the loading flag so the 5s auto-refresh doesn't flicker the UI.
-  async function loadSales(filterDate, { silent = false } = {}) {
+  const hasFilter = Boolean(from || to)
+
+  // FR-012/FR-013: list past sales, optionally filtered by a from/to date range
+  // (GET /api/sales[?from=&to=]). `silent` skips the loading flag so the 5s
+  // auto-refresh doesn't flicker the UI.
+  async function loadSales(fromDate, toDate, { silent = false } = {}) {
     if (!silent) setLoading(true)
     setError('')
     try {
-      const { data } = await client.get('/sales', {
-        params: filterDate ? { date: filterDate } : {},
-      })
+      const params = {}
+      if (fromDate) params.from = fromDate
+      if (toDate) params.to = toDate
+      const { data } = await client.get('/sales', { params })
       setSales(data)
     } catch (err) {
       setError(err.response?.data?.message || 'Could not load sales history')
@@ -60,12 +66,12 @@ export default function SalesHistoryPage() {
   }
 
   useEffect(() => {
-    loadSales(date)
+    loadSales(from, to)
     // FR-016 / NFR-002: poll so a sale rung up on another device shows within 5s.
-    const timer = setInterval(() => loadSales(date, { silent: true }), 5000)
+    const timer = setInterval(() => loadSales(from, to, { silent: true }), 5000)
     return () => clearInterval(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date])
+  }, [from, to])
 
   const totalSales = sales.reduce((sum, s) => sum + Number(s.totalAmount), 0)
   const itemsSold = sales.reduce(
@@ -76,18 +82,34 @@ export default function SalesHistoryPage() {
 
   const filterTools = (
     <div className="hist-tools">
+      <label className="hist-range-label">From</label>
       <input
         type="date"
         className="hist-date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
+        value={from}
+        max={to || undefined}
+        onChange={(e) => setFrom(e.target.value)}
       />
-      {date && (
-        <button className="pill-btn" onClick={() => setDate('')}>
+      <label className="hist-range-label">To</label>
+      <input
+        type="date"
+        className="hist-date"
+        value={to}
+        min={from || undefined}
+        onChange={(e) => setTo(e.target.value)}
+      />
+      {hasFilter && (
+        <button
+          className="pill-btn"
+          onClick={() => {
+            setFrom('')
+            setTo('')
+          }}
+        >
           Show all
         </button>
       )}
-      <button className="pill-btn" onClick={() => loadSales(date)}>
+      <button className="pill-btn" onClick={() => loadSales(from, to)}>
         Refresh
       </button>
     </div>
@@ -141,7 +163,7 @@ export default function SalesHistoryPage() {
         </div>
 
         {!loading && !error && sales.length === 0 && (
-          <p className="hist-empty">{date ? 'No sales on this date.' : 'No sales recorded yet.'}</p>
+          <p className="hist-empty">{hasFilter ? 'No sales in this range.' : 'No sales recorded yet.'}</p>
         )}
 
         {sales.map((sale) => {

@@ -2,6 +2,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+.hist-range-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--faint);
 }
 .hist-date {
   padding: 8px 12px;
