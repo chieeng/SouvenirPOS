@@ -74,12 +74,28 @@ public class SaleService {
         return saleRepository.save(sale);
     }
 
+    /**
+     * Sales history (FR-012), optionally narrowed (FR-013). A {@code from}/{@code to} range
+     * takes precedence; a single {@code date} filters one day; no filter returns all sales.
+     * An open-ended range (only one bound) collapses to that single day, and a reversed
+     * range is swapped, so the query is always bounded and deterministic.
+     */
     @Transactional(readOnly = true)
-    public List<Sale> listSales(LocalDate date) {
+    public List<Sale> listSales(LocalDate date, LocalDate from, LocalDate to) {
+        if (from != null || to != null) {
+            LocalDate startDate = (from != null) ? from : to;
+            LocalDate endDate = (to != null) ? to : from;
+            if (startDate.isAfter(endDate)) {
+                LocalDate swap = startDate;
+                startDate = endDate;
+                endDate = swap;
+            }
+            return saleRepository.findBySaleDateTimeBetweenOrderBySaleDateTimeDesc(
+                    startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
+        }
         if (date != null) {
-            LocalDateTime start = date.atStartOfDay();
-            LocalDateTime end = date.atTime(LocalTime.MAX);
-            return saleRepository.findBySaleDateTimeBetweenOrderBySaleDateTimeDesc(start, end);
+            return saleRepository.findBySaleDateTimeBetweenOrderBySaleDateTimeDesc(
+                    date.atStartOfDay(), date.atTime(LocalTime.MAX));
         }
         return saleRepository.findAllByOrderBySaleDateTimeDesc();
     }
