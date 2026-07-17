@@ -1,7 +1,11 @@
 import axios from 'axios'
 
+// API base: in production VITE_API_BASE_URL points at the deployed backend origin; in dev it
+// is empty so we use the relative "/api" path that the Vite dev server proxies to the local
+// backend. Any trailing slash on the origin is trimmed before appending "/api".
+const apiOrigin = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')
 const client = axios.create({
-  baseURL: '/api',
+  baseURL: apiOrigin ? `${apiOrigin}/api` : '/api',
 })
 
 client.interceptors.request.use((config) => {
