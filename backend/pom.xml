@@ -41,6 +41,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- In-memory database so the Spring context test runs without an external DB -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -67,6 +74,16 @@
 			<artifactId>postgresql</artifactId>
 		</dependency>
 
+		<!-- Versioned schema migrations (used in the prod profile with ddl-auto=validate) -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+
 		<!-- JWT support -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
@@ -84,6 +101,13 @@
 			<artifactId>jjwt-jackson</artifactId>
 			<version>0.12.6</version>
 			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Loads a .env file into Spring's Environment (keeps secrets out of properties) -->
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>spring-dotenv</artifactId>
+			<version>5.1.0</version>
 		</dependency>
 	</dependencies>
 

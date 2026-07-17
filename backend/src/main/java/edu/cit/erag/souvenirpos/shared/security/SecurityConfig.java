@@ -90,7 +90,11 @@ public class SecurityConfig {
         // origin combined with allowCredentials=true reflects any site's Origin back and
         // is rejected by browsers / forbidden by the CORS spec, so origins are enumerated.
         configuration.setAllowedOrigins(allowedOrigins);
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // Scoped to the methods the SouvenirPOS frontend actually calls: the API exposes only
+        // GET and POST endpoints (all mutations, incl. deactivate/reactivate/force-logout, are
+        // POST); OPTIONS is required for the CORS preflight. No PUT/DELETE/PATCH are served.
+        configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        // Only the headers the frontend sends: the JWT (Authorization) and the JSON body type.
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
 
