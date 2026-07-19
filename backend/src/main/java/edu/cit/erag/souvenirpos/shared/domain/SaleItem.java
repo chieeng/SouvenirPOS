@@ -20,9 +20,6 @@ public class SaleItem {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @Column(nullable = false)
-    private int quantity;
-
     // BR-005: the price entered by the cashier is permanently recorded on the line.
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice;
@@ -33,9 +30,8 @@ public class SaleItem {
     public SaleItem() {
     }
 
-    public SaleItem(Category category, int quantity, BigDecimal unitPrice, BigDecimal subtotal) {
+    public SaleItem(Category category, BigDecimal unitPrice, BigDecimal subtotal) {
         this.category = category;
-        this.quantity = quantity;
         this.unitPrice = unitPrice;
         this.subtotal = subtotal;
     }
@@ -62,14 +58,6 @@ public class SaleItem {
 
     public void setCategory(Category category) {
         this.category = category;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
     }
 
     public BigDecimal getUnitPrice() {

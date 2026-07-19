@@ -38,7 +38,7 @@ app never connects to Supabase directly (SRS NFR-011).
 
 - **Login** → `POST /api/auth/login`, stores the JWT (attached to every later request).
 - **POS sale** → loads categories from `GET /api/categories`, cashier picks a category,
-  enters price on the numpad, sets quantity, adds lines, enters payment, and checks out via
+  enters price on the numpad, adds lines, enters payment, and checks out via
   `POST /api/sales`. The backend computes totals/change and returns the receipt, shown in a
   dialog. Session persists across restarts; Logout clears it.
 

@@ -9,7 +9,6 @@ public class SaleItemResponse {
     private Long id;
     private Long categoryId;
     private String categoryName;
-    private int quantity;
     private BigDecimal unitPrice;
     private BigDecimal subtotal;
 
@@ -17,7 +16,6 @@ public class SaleItemResponse {
         this.id = item.getId();
         this.categoryId = item.getCategory().getId();
         this.categoryName = item.getCategory().getName();
-        this.quantity = item.getQuantity();
         this.unitPrice = item.getUnitPrice();
         this.subtotal = item.getSubtotal();
     }
@@ -32,10 +30,6 @@ public class SaleItemResponse {
 
     public String getCategoryName() {
         return categoryName;
-    }
-
-    public int getQuantity() {
-        return quantity;
     }
 
     public BigDecimal getUnitPrice() {

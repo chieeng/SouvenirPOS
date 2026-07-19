@@ -28,7 +28,6 @@ export default function POSPage() {
   const [categories, setCategories] = useState([])
   const [category, setCategory] = useState(null)
   const [priceInput, setPriceInput] = useState('')
-  const [quantity, setQuantity] = useState(1)
   const [cart, setCart] = useState([])
   const [payment, setPayment] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -49,11 +48,8 @@ export default function POSPage() {
     loadCategories()
   }, [])
 
-  const total = useMemo(
-    () => cart.reduce((sum, line) => sum + line.price * line.quantity, 0),
-    [cart],
-  )
-  const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0)
+  const total = useMemo(() => cart.reduce((sum, line) => sum + line.price, 0), [cart])
+  const cartCount = cart.length
 
   const paymentAmount = parseFloat(payment) || 0
   const change = paymentAmount - total
@@ -77,19 +73,14 @@ export default function POSPage() {
     setPayment(safe)
   }
 
-  function adjustQuantity(delta) {
-    setQuantity((prev) => Math.max(1, prev + delta))
-  }
-
   function handleAddToCart() {
     const price = parseFloat(priceInput)
-    // FR-007: a sale line needs a category, a manually entered price, and quantity >= 1.
-    if (!category || !price || price <= 0 || quantity < 1) {
+    // FR-007: a sale line needs a category and a manually entered price; each line is one item.
+    if (!category || !price || price <= 0) {
       return
     }
-    setCart((prev) => [...prev, { id: Date.now(), category, price, quantity }])
+    setCart((prev) => [...prev, { id: Date.now(), category, price }])
     setPriceInput('')
-    setQuantity(1)
   }
 
   function handleRemoveLine(id) {
@@ -107,7 +98,6 @@ export default function POSPage() {
       const { data } = await client.post('/sales', {
         items: cart.map((line) => ({
           categoryId: line.category.id,
-          quantity: line.quantity,
           unitPrice: line.price,
         })),
         paymentAmount,
@@ -141,18 +131,21 @@ export default function POSPage() {
         {/* ---------- item entry ---------- */}
         <section className="pos-entry">
           <div className="pos-entry-label">Choose category</div>
-          <div className="category-chips">
-            {categories.length === 0 && <span className="category-hint">Loading categories…</span>}
+          <select
+            className="category-select"
+            value={category?.id ?? ''}
+            onChange={(e) =>
+              setCategory(categories.find((c) => String(c.id) === e.target.value) ?? null)
+            }
+            disabled={categories.length === 0}
+          >
+            {categories.length === 0 && <option value="">Loading categories…</option>}
             {categories.map((c) => (
-              <button
-                key={c.id}
-                className={`chip ${category?.id === c.id ? 'chip-active' : ''}`}
-                onClick={() => setCategory(c)}
-              >
+              <option key={c.id} value={c.id}>
                 {c.name}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
 
           <div className="price-panel">
             <span className="price-panel-label">Item amount</span>
@@ -184,19 +177,6 @@ export default function POSPage() {
             ))}
           </div>
 
-          <div className="quantity-row">
-            <span>Quantity</span>
-            <div className="quantity-stepper">
-              <button onClick={() => adjustQuantity(-1)} aria-label="Decrease quantity">
-                −
-              </button>
-              <span className="quantity-value">{quantity}</span>
-              <button onClick={() => adjustQuantity(1)} aria-label="Increase quantity">
-                +
-              </button>
-            </div>
-          </div>
-
           <button className="pos-add-btn" onClick={handleAddToCart}>
             <span className="pos-add-plus">+</span> Add to sale
           </button>
@@ -221,11 +201,9 @@ export default function POSPage() {
                 <div className="cart-line-swatch" aria-hidden="true" />
                 <div className="cart-line-info">
                   <strong>{line.category.name}</strong>
-                  <span>
-                    {formatPeso(line.price)} × {line.quantity}
-                  </span>
+                  <span>{formatPeso(line.price)}</span>
                 </div>
-                <div className="cart-line-price">{formatPeso(line.price * line.quantity)}</div>
+                <div className="cart-line-price">{formatPeso(line.price)}</div>
                 <button
                   className="cart-line-remove"
                   onClick={() => handleRemoveLine(line.id)}
@@ -303,9 +281,7 @@ export default function POSPage() {
               <div className="pos-receipt-items">
                 {receipt.items.map((it) => (
                   <div key={it.id} className="pos-receipt-item">
-                    <span>
-                      {it.categoryName} ×{it.quantity}
-                    </span>
+                    <span>{it.categoryName}</span>
                     <span>{Number(it.subtotal).toFixed(2)}</span>
                   </div>
                 ))}

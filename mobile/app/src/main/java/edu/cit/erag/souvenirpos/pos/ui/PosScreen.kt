@@ -155,7 +155,7 @@ private fun SellStep(
             Column {
                 if (viewModel.cart.isNotEmpty()) {
                     CartBar(
-                        count = viewModel.cart.sumOf { it.quantity },
+                        count = viewModel.cart.size,
                         total = viewModel.total,
                         onClick = onOpenCart,
                     )
@@ -204,20 +204,6 @@ private fun SellStep(
 
             Spacer(Modifier.height(16.dp))
             Keypad { viewModel.onNumpad(if (it == "⌫") PosViewModel.KEY_BACKSPACE else it) }
-
-            Spacer(Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("Quantity", style = MaterialTheme.typography.titleSmall)
-                Stepper(
-                    value = viewModel.quantity,
-                    onDec = viewModel::decQuantity,
-                    onInc = viewModel::incQuantity,
-                )
-            }
 
             viewModel.error?.let {
                 Spacer(Modifier.height(12.dp))
@@ -372,7 +358,7 @@ private fun CartStep(
 ) {
     Scaffold(
         containerColor = Paper,
-        topBar = { StepTopBar("Current order", "${viewModel.cart.sumOf { it.quantity }} items", onBack) },
+        topBar = { StepTopBar("Current order", "${viewModel.cart.size} items", onBack) },
         bottomBar = {
             Surface(color = Color(0xFFFBFAF8)) {
                 Column(modifier = Modifier.padding(20.dp)) {
@@ -425,13 +411,6 @@ private fun CartStep(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(line.category.name, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                         Text(peso(line.unitPrice), color = Faint, fontSize = 12.sp)
-                        Spacer(Modifier.height(6.dp))
-                        Stepper(
-                            value = line.quantity,
-                            onDec = { viewModel.decLine(line.id) },
-                            onInc = { viewModel.incLine(line.id) },
-                            compact = true,
-                        )
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(peso(line.subtotal), fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -655,39 +634,6 @@ private fun Keypad(onKey: (String) -> Unit) {
     }
 }
 
-@Composable
-private fun Stepper(value: Int, onDec: () -> Unit, onInc: () -> Unit, compact: Boolean = false) {
-    val h = if (compact) 30.dp else 44.dp
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clip(RoundedCornerShape(9.dp))
-            .background(if (compact) Paper else Sand),
-    ) {
-        StepBtn("−", h, Muted, onDec)
-        Text(
-            value.toString(),
-            fontWeight = FontWeight.Bold,
-            fontSize = if (compact) 13.sp else 18.sp,
-            modifier = Modifier.width(if (compact) 26.dp else 44.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        )
-        StepBtn("+", h, Teal, onInc)
-    }
-}
-
-@Composable
-private fun StepBtn(symbol: String, h: androidx.compose.ui.unit.Dp, color: Color, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(h)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(symbol, color = color, fontSize = if (h > 40.dp) 22.sp else 16.sp, fontWeight = FontWeight.SemiBold)
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun QuickCash(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
@@ -737,7 +683,7 @@ private fun ReceiptDialog(receipt: SaleResponse, onDismiss: () -> Unit) {
                             .padding(vertical = 2.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Text("${item.categoryName} ×${item.quantity}")
+                        Text(item.categoryName)
                         Text(peso(item.subtotal))
                     }
                 }

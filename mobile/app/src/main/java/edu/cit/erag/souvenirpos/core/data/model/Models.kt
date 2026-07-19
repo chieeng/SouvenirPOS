@@ -49,7 +49,6 @@ data class UserCreateRequest(
 
 data class SaleLineRequest(
     val categoryId: Long,
-    val quantity: Int,
     val unitPrice: Double,
 )
 
@@ -62,7 +61,6 @@ data class SaleItemResponse(
     val id: Long,
     val categoryId: Long,
     val categoryName: String,
-    val quantity: Int,
     val unitPrice: Double,
     val subtotal: Double,
 )
