@@ -5,4 +5,7 @@
 -- the sale) and their sale totals, so past sales stay financially correct. What is
 -- lost is the per-line item count for those older rows; unit_price alone no longer
 -- reconstructs the subtotal where quantity was greater than 1.
-alter table sale_items drop column quantity;
+-- IF EXISTS so this is safe whichever way the column goes away first: if the column is
+-- dropped by hand to unblock a running deployment, Flyway applying this afterwards is a
+-- no-op rather than a startup-breaking error.
+alter table sale_items drop column if exists quantity;
