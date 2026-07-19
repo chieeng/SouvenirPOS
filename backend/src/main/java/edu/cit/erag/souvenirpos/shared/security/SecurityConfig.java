@@ -76,6 +76,13 @@ public class SecurityConfig {
                         // (incl. /api/auth/change-password) requires a valid token.
                         .requestMatchers("/", "/health").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
+                        // Spring Boot forwards unhandled exceptions to /error, and the security
+                        // filter chain also runs on the ERROR dispatch — by which point the
+                        // STATELESS SecurityContext has been cleared. Without this the forward
+                        // is rejected as unauthenticated and every 500 reaches the client as a
+                        // bodyless 401, which the web client treats as a revoked token and
+                        // force-logs the user out. Permitting /error lets real errors surface.
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
