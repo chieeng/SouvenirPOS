@@ -1,9 +1,7 @@
 package edu.cit.erag.souvenirpos.shared.config;
 
-import edu.cit.erag.souvenirpos.shared.domain.Category;
 import edu.cit.erag.souvenirpos.shared.domain.Role;
 import edu.cit.erag.souvenirpos.shared.domain.User;
-import edu.cit.erag.souvenirpos.category.repository.CategoryRepository;
 import edu.cit.erag.souvenirpos.user.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,20 +12,13 @@ import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.List;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
 
-    private static final List<String> DEFAULT_CATEGORIES = List.of(
-            "Bracelets", "RTW", "T-Shirt", "Assorted", "Bag", "Drinks", "Hat",
-            "Lanyard", "Payong", "Ref Magnet", "Rosary", "Sarong", "Shades",
-            "Toys", "Tsinelas", "Tubig");
-
     private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
     private final PasswordEncoder passwordEncoder;
     private final boolean adminBootstrapEnabled;
     private final String seedUsername;
@@ -35,13 +26,11 @@ public class DataSeeder implements CommandLineRunner {
 
     public DataSeeder(
             UserRepository userRepository,
-            CategoryRepository categoryRepository,
             PasswordEncoder passwordEncoder,
             @Value("${souvenirpos.admin.bootstrap-enabled:true}") boolean adminBootstrapEnabled,
             @Value("${souvenirpos.seed.owner-username}") String seedUsername,
             @Value("${souvenirpos.seed.owner-password:}") String seedPassword) {
         this.userRepository = userRepository;
-        this.categoryRepository = categoryRepository;
         this.passwordEncoder = passwordEncoder;
         this.adminBootstrapEnabled = adminBootstrapEnabled;
         this.seedUsername = seedUsername;
@@ -50,8 +39,10 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // Categories are deliberately NOT seeded: the owner creates them through the
+        // Categories screen (FR-005), so a fresh deployment starts with an empty catalogue
+        // rather than someone else's shop's default list.
         bootstrapOwnerAccount();
-        seedDefaultCategories();
     }
 
     /**
@@ -95,13 +86,6 @@ public class DataSeeder implements CommandLineRunner {
         } else {
             log.info("Seeded initial owner account -> username: '{}' (password taken from configuration; "
                     + "not logged). Log in and rotate it after first use.", seedUsername);
-        }
-    }
-
-    private void seedDefaultCategories() {
-        if (categoryRepository.count() == 0) {
-            DEFAULT_CATEGORIES.forEach(name -> categoryRepository.save(new Category(name)));
-            log.info("Seeded {} default souvenir categories.", DEFAULT_CATEGORIES.size());
         }
     }
 

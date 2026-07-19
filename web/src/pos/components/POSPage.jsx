@@ -26,6 +26,9 @@ export default function POSPage() {
   const { user } = useAuth()
 
   const [categories, setCategories] = useState([])
+  // Distinguishes "still fetching" from "fetched, and the shop has none yet" — the latter
+  // is the normal state of a fresh deployment, since categories are no longer seeded.
+  const [loadingCategories, setLoadingCategories] = useState(true)
   const [category, setCategory] = useState(null)
   const [priceInput, setPriceInput] = useState('')
   const [cart, setCart] = useState([])
@@ -43,6 +46,8 @@ export default function POSPage() {
         setCategory((prev) => prev ?? data[0] ?? null)
       } catch (err) {
         setError(err.response?.data?.message || 'Could not load categories')
+      } finally {
+        setLoadingCategories(false)
       }
     }
     loadCategories()
@@ -129,7 +134,11 @@ export default function POSPage() {
             }
             disabled={categories.length === 0}
           >
-            {categories.length === 0 && <option value="">Loading categories…</option>}
+            {categories.length === 0 && (
+              <option value="">
+                {loadingCategories ? 'Loading categories…' : 'No categories yet'}
+              </option>
+            )}
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
