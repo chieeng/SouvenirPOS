@@ -74,7 +74,16 @@
 			<artifactId>postgresql</artifactId>
 		</dependency>
 
-		<!-- Versioned schema migrations (used in the prod profile with ddl-auto=validate) -->
+		<!-- Versioned schema migrations (used in the prod profile with ddl-auto=validate).
+		     spring-boot-starter-flyway is REQUIRED, not optional: Boot 4 moved Flyway
+		     auto-configuration out of spring-boot-autoconfigure into its own module. With
+		     only flyway-core on the classpath, Flyway is never wired up — the spring.flyway.*
+		     properties bind to nothing and it silently never runs, with no log output at all
+		     to say so. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-flyway</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
