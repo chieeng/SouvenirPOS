@@ -113,20 +113,10 @@ export default function POSPage() {
     }
   }
 
-  const drawerStatus = (
-    <div className="pos-drawer">
-      <div className="pos-drawer-reg">Register · Front 01</div>
-      <div className="pos-drawer-open">● Drawer open</div>
-    </div>
-  )
-
   return (
-    <AppShell
-      title="Point of sale"
-      roleBadge={false}
-      variant="flush"
-      actions={drawerStatus}
-    >
+    // No top bar: the cashier-facing sale screen stays uncluttered, and account details
+    // and actions live in the rail's profile menu instead.
+    <AppShell variant="flush" header={false}>
       <div className="pos">
         {/* ---------- item entry ---------- */}
         <section className="pos-entry">
