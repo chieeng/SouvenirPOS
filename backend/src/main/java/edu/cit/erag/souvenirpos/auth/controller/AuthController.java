@@ -11,10 +11,13 @@ import edu.cit.erag.souvenirpos.user.service.UserService;
 import edu.cit.erag.souvenirpos.shared.security.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
@@ -55,9 +60,19 @@ public class AuthController {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
-        } catch (Exception ex) {
+        } catch (AuthenticationException ex) {
+            // A genuine credential failure: count it against the rate limit and stay vague to
+            // the client so the response never reveals whether the username exists.
             loginRateLimiter.recordFailure(rateKey);
             throw new BadCredentialsException("Invalid username or password");
+        } catch (Exception ex) {
+            // Anything else (database down, schema mismatch, misconfiguration) is an internal
+            // fault, not a bad password. It must be logged with its cause — previously this was
+            // swallowed and reported as "invalid username or password", which made outages look
+            // like typos. It is also NOT counted against the rate limit, since the caller did
+            // nothing wrong.
+            log.error("Login failed for user '{}' due to an internal error", request.getUsername(), ex);
+            throw ex;
         }
 
         loginRateLimiter.recordSuccess(rateKey);
