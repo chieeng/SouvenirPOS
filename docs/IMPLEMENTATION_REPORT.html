@@ -39,7 +39,7 @@
 <h2>1. Core Feature Overview</h2>
 <h3>Purpose</h3>
 <p>The core feature of SouvenirPOS is <strong>Process Sale</strong> — recording a complete sales transaction at the counter. It is the central use case of the system (the "Process Sale" use case in the SRS Use Case model, which <em>includes</em> "Generate Receipt"), and every other feature exists to support it: authentication protects it, category management feeds it, and sales history and the dashboard read back what it produces.</p>
-<p>The feature lets a cashier build a sale from one or more <strong>category + price + quantity</strong> lines, enter the customer's <strong>cash payment</strong>, and complete the transaction. The backend — the single source of truth — <strong>recomputes</strong> every monetary value, <strong>validates</strong> the business rules, <strong>persists</strong> the sale immutably to the shared Supabase database, and returns a <strong>digital receipt</strong>. Because both the ReactJS web app and the Android Kotlin app talk to the same Spring Boot API, a sale rung up on one platform appears on the other within five seconds.</p>
+<p>The feature lets a cashier build a sale from one or more <strong>category + price</strong> lines, enter the customer's <strong>cash payment</strong>, and complete the transaction. The backend — the single source of truth — <strong>recomputes</strong> every monetary value, <strong>validates</strong> the business rules, <strong>persists</strong> the sale immutably to the shared Supabase database, and returns a <strong>digital receipt</strong>. Because both the ReactJS web app and the Android Kotlin app talk to the same Spring Boot API, a sale rung up on one platform appears on the other within five seconds.</p>
 <h3>Why it matters</h3>
 <p>It replaces manual notebook recording with a consistent, online record of every sale that the owner can review remotely and that a second cashier can add to from another device during tour-bus rushes.</p>
 
@@ -49,7 +49,7 @@
 <tbody>
 <tr><td><strong>FR-005</strong></td><td>Select Sale Category</td><td>Cashier picks a category from the owner-managed list for each line</td></tr>
 <tr><td><strong>FR-006</strong></td><td>Create Sale Transaction</td><td>A new sale is opened, tied to the logged-in cashier and current date/time</td></tr>
-<tr><td><strong>FR-007</strong></td><td>Add Items to Sale</td><td>One or more lines, each = category + manually entered price + quantity ≥ 1</td></tr>
+<tr><td><strong>FR-007</strong></td><td>Add Items to Sale</td><td>One or more lines, each = category + manually entered price (one item per line)</td></tr>
 <tr><td><strong>FR-008</strong></td><td>Compute Sale Totals</td><td>Server computes each line subtotal and the sale total</td></tr>
 <tr><td><strong>FR-009</strong></td><td>Record Payment &amp; Compute Change</td><td>Server accepts cash tendered and computes change due</td></tr>
 <tr><td><strong>FR-010</strong></td><td>Generate Digital Receipt</td><td>Completed sale is returned and shown as a receipt</td></tr>
@@ -64,7 +64,7 @@
 <pre>Login (JWT)
    |
    v
-Open new sale --&gt; [ Select category -&gt; enter price -&gt; enter quantity -&gt; Add line ] &lt;-+
+Open new sale --&gt; [ Select category -&gt; enter price -&gt; Add line ] &lt;-+
    |                                                                             |
    |                                  more items? ---------------------------------+
    v
@@ -91,16 +91,16 @@ Sale appears in Sales History &amp; Dashboard on web and mobile within 5 s (FR-0
 <tbody>
 <tr><td>1</td><td>Cashier logs in</td><td>Stores JWT; opens POS screen</td><td><code>POST /api/auth/login</code> verifies password hash, issues JWT</td><td><code>SELECT</code> user by username</td><td>POS screen ready, categories loaded</td></tr>
 <tr><td>2</td><td>Selects a category</td><td>Highlights the chosen category chip</td><td><code>GET /api/categories</code> (on load)</td><td><code>SELECT</code> all categories</td><td>Owner-managed category list shown (FR-005)</td></tr>
-<tr><td>3</td><td>Types a price, sets quantity, taps <strong>Add to sale</strong></td><td>Adds a line to the cart; running total updates</td><td>— (held in client state until checkout)</td><td>—</td><td>Cart line: category, price, qty, subtotal (FR-007)</td></tr>
+<tr><td>3</td><td>Types a price, taps <strong>Add to sale</strong></td><td>Adds a line to the cart; running total updates</td><td>— (held in client state until checkout)</td><td>—</td><td>Cart line: category, price, subtotal (FR-007)</td></tr>
 <tr><td>4</td><td>Repeats for more items</td><td>Cart grows; total recalculated for display</td><td>—</td><td>—</td><td>Multi-line cart with live total (FR-008)</td></tr>
 <tr><td>5</td><td>Enters cash tendered, taps <strong>Checkout / Complete sale</strong></td><td>Sends <code>POST /api/sales</code> with items + payment + <code>Authorization: Bearer &lt;JWT&gt;</code></td><td><code>JwtAuthFilter</code> validates token → <code>SaleService.createSale()</code></td><td>—</td><td>Request accepted for processing</td></tr>
-<tr><td>6</td><td>(waits)</td><td>Shows spinner</td><td>Resolve cashier (BR-004); <code>@Valid</code> checks BR-002 &amp; price/qty; recompute <code>subtotal = unitPrice × quantity</code>, sum <code>total</code>; enforce <code>payment ≥ total</code> (BR-003); <code>change = payment − total</code> (FR-009)</td><td><code>SELECT</code> category by id (per line)</td><td>Server-computed, trustworthy totals</td></tr>
+<tr><td>6</td><td>(waits)</td><td>Shows spinner</td><td>Resolve cashier (BR-004); <code>@Valid</code> checks BR-002 &amp; price/qty; recompute <code>subtotal = unitPrice</code>, sum <code>total</code>; enforce <code>payment ≥ total</code> (BR-003); <code>change = payment − total</code> (FR-009)</td><td><code>SELECT</code> category by id (per line)</td><td>Server-computed, trustworthy totals</td></tr>
 <tr><td>7</td><td>(waits)</td><td>—</td><td>Persist the sale graph in one transaction</td><td><code>INSERT</code> into <code>sales</code> + cascade <code>INSERT</code> into <code>sale_items</code></td><td>Sale saved with generated id (FR-011)</td></tr>
 <tr><td>8</td><td>Sees confirmation</td><td>Renders the <strong>digital receipt</strong> (items, qty, price, total, payment, change)</td><td>Returns <code>201 Created</code> + <code>SaleResponse</code></td><td>—</td><td>Digital receipt displayed (FR-010)</td></tr>
 <tr><td>9</td><td>Owner opens Dashboard / History (any device)</td><td>Auto-refreshing views poll the API</td><td><code>GET /api/sales</code>, <code>GET /api/sales/summary</code></td><td><code>SELECT</code> sales (optionally by date)</td><td>New sale visible within 5 s (FR-012/015/016)</td></tr>
 </tbody>
 </table>
-<p><strong>Error paths:</strong> invalid/expired JWT → <code>401</code>; empty cart or bad price/quantity → <code>400</code> with a validation message; <code>payment &lt; total</code> → <code>400 "Payment amount must be greater than or equal to the total"</code>; unknown category → <code>400 "Category not found"</code>. The client shows the returned message and the sale is <strong>not</strong> saved.</p>
+<p><strong>Error paths:</strong> invalid/expired JWT → <code>401</code>; empty cart or bad price → <code>400</code> with a validation message; <code>payment &lt; total</code> → <code>400 "Payment amount must be greater than or equal to the total"</code>; unknown category → <code>400 "Category not found"</code>. The client shows the returned message and the sale is <strong>not</strong> saved.</p>
 
 <h2>5. Implementation Explanation</h2>
 
@@ -109,12 +109,12 @@ Sale appears in Sales History &amp; Dashboard on web and mobile within 5 s (FR-0
 <thead><tr><th>Component</th><th>File</th><th>Responsibility</th></tr></thead>
 <tbody>
 <tr><td><code>SaleController</code></td><td><code>backend/.../sale/controller/SaleController.java</code></td><td>REST endpoints under <code>/api/sales</code>. <code>createSale()</code> handles <code>POST</code> (<code>@Valid @RequestBody</code>, returns <code>201 Created</code>); also <code>GET</code> list (FR-012, with optional <code>?date</code>), <code>GET /summary</code> (FR-015), <code>GET /{id}</code> (FR-014).</td></tr>
-<tr><td><code>SaleService</code></td><td><code>backend/.../sale/service/SaleService.java</code></td><td>The heart of the feature. <code>createSale()</code> is <code>@Transactional</code>: resolves the authenticated cashier (<code>currentUser()</code>, BR-004), loops the lines, looks up each <code>Category</code>, computes <code>subtotal = unitPrice × quantity</code> and the running <code>total</code> with <code>BigDecimal</code> (FR-008, BR-007), enforces <code>payment ≥ total</code> (BR-003), sets <code>change = payment − total</code> (FR-009), and saves.</td></tr>
+<tr><td><code>SaleService</code></td><td><code>backend/.../sale/service/SaleService.java</code></td><td>The heart of the feature. <code>createSale()</code> is <code>@Transactional</code>: resolves the authenticated cashier (<code>currentUser()</code>, BR-004), loops the lines, looks up each <code>Category</code>, computes <code>subtotal = unitPrice</code> and the running <code>total</code> with <code>BigDecimal</code> (FR-008, BR-007), enforces <code>payment ≥ total</code> (BR-003), sets <code>change = payment − total</code> (FR-009), and saves.</td></tr>
 <tr><td><code>Sale</code> (entity)</td><td><code>backend/.../shared/domain/Sale.java</code></td><td>JPA <code>@Entity</code> → <code>sales</code> table. Holds <code>saleDateTime</code>, <code>cashier</code> (<code>@ManyToOne</code>, not null — BR-004), <code>totalAmount</code>, <code>paymentAmount</code>, <code>changeAmount</code>, and a cascaded <code>@OneToMany</code> list of <code>SaleItem</code>.</td></tr>
-<tr><td><code>SaleItem</code> (entity)</td><td><code>backend/.../shared/domain/SaleItem.java</code></td><td>JPA <code>@Entity</code> → <code>sale_items</code> table. Holds <code>category</code>, <code>quantity</code>, <code>unitPrice</code> (BR-005 — the price entered at sale time), and <code>subtotal</code>, all <code>precision=12, scale=2</code> (BR-007).</td></tr>
+<tr><td><code>SaleItem</code> (entity)</td><td><code>backend/.../shared/domain/SaleItem.java</code></td><td>JPA <code>@Entity</code> → <code>sale_items</code> table. Holds <code>category</code>, <code>unitPrice</code> (BR-005 — the price entered at sale time), and <code>subtotal</code>, all <code>precision=12, scale=2</code> (BR-007).</td></tr>
 <tr><td><code>SaleRepository</code></td><td><code>backend/.../sale/repository/SaleRepository.java</code></td><td>Spring Data JPA repository; derived queries for date-range and ordered listing.</td></tr>
 <tr><td><code>SaleCreateRequest</code></td><td><code>backend/.../sale/dto/SaleCreateRequest.java</code></td><td>Request DTO. <code>@NotEmpty</code> on <code>items</code> enforces <strong>BR-002</strong> (≥1 line); <code>@NotNull paymentAmount</code>; <code>@Valid</code> cascades to each line.</td></tr>
-<tr><td><code>SaleItemRequest</code></td><td><code>backend/.../sale/dto/SaleItemRequest.java</code></td><td>Per-line DTO. <code>@NotNull categoryId</code>, <code>@Min(1) quantity</code> (<strong>FR-007</strong>), <code>@DecimalMin("0.01") unitPrice</code> (price &gt; 0).</td></tr>
+<tr><td><code>SaleItemRequest</code></td><td><code>backend/.../sale/dto/SaleItemRequest.java</code></td><td>Per-line DTO. <code>@NotNull categoryId</code>, <code>@DecimalMin("0.01") unitPrice</code> (price &gt; 0).</td></tr>
 <tr><td><code>SaleResponse</code> / <code>SaleItemResponse</code></td><td><code>backend/.../sale/dto/</code></td><td>Response DTOs used to build the digital receipt payload (FR-010).</td></tr>
 <tr><td><code>GlobalExceptionHandler</code></td><td><code>backend/.../shared/exception/GlobalExceptionHandler.java</code></td><td><code>@RestControllerAdvice</code>: validation errors → <code>400</code> (field → message); <code>IllegalArgumentException</code> (payment &lt; total, category not found) → <code>400</code>; bad credentials → <code>401</code>; access denied → <code>403</code>.</td></tr>
 <tr><td><code>JwtAuthFilter</code> / <code>JwtService</code> / <code>SecurityConfig</code></td><td><code>backend/.../shared/security/</code></td><td>Enforce <strong>BR-001 / NFR-004</strong>: every <code>/api/**</code> call (except login) requires a valid JWT; the filter validates the token and puts the user in the <code>SecurityContext</code> so <code>SaleService</code> can attribute the sale.</td></tr>
@@ -125,7 +125,7 @@ Sale appears in Sales History &amp; Dashboard on web and mobile within 5 s (FR-0
 <table>
 <thead><tr><th>Component</th><th>File</th><th>Responsibility</th></tr></thead>
 <tbody>
-<tr><td><code>POSPage</code></td><td><code>web/src/pos/components/POSPage.jsx</code></td><td>The sale screen. React state holds <code>categories</code>, selected <code>category</code>, keypad <code>priceInput</code>, <code>quantity</code>, <code>cart</code>, and <code>payment</code>. <code>handleAddToCart()</code> validates category + price &gt; 0 + quantity ≥ 1 and appends a line; <code>handleCheckout()</code> builds the request and <code>POST</code>s <code>/sales</code>, then stores the returned sale as <code>receipt</code> for the receipt modal (FR-010). Totals/change are computed client-side <strong>for display only</strong>.</td></tr>
+<tr><td><code>POSPage</code></td><td><code>web/src/pos/components/POSPage.jsx</code></td><td>The sale screen. React state holds <code>categories</code>, selected <code>category</code>, keypad <code>priceInput</code>, <code>quantity</code>, <code>cart</code>, and <code>payment</code>. <code>handleAddToCart()</code> validates category + price &gt; 0 and appends a single-item line; <code>handleCheckout()</code> builds the request and <code>POST</code>s <code>/sales</code>, then stores the returned sale as <code>receipt</code> for the receipt modal (FR-010). Totals/change are computed client-side <strong>for display only</strong>.</td></tr>
 <tr><td><code>client</code> (Axios)</td><td><code>web/src/shared/api/client.js</code></td><td><code>baseURL: '/api'</code> + a request interceptor that attaches <code>Authorization: Bearer &lt;token&gt;</code> (BR-001).</td></tr>
 <tr><td><code>AuthContext</code></td><td><code>web/src/auth/context/AuthContext.jsx</code></td><td>Stores the JWT and user after login and exposes it to the POS.</td></tr>
 </tbody>
@@ -135,7 +135,7 @@ Sale appears in Sales History &amp; Dashboard on web and mobile within 5 s (FR-0
 <table>
 <thead><tr><th>Component</th><th>File</th><th>Responsibility</th></tr></thead>
 <tbody>
-<tr><td><code>PosScreen</code></td><td><code>mobile/.../pos/ui/PosScreen.kt</code></td><td>The three-step sale UI: <strong>Sell</strong> (category chips, amount keypad, quantity stepper), <strong>Cart</strong> (line items with per-line quantity steppers, subtotal/total), <strong>Payment</strong> (amount due, quick-cash chips, cash keypad, change due). <code>ReceiptDialog</code> shows the digital receipt (FR-010).</td></tr>
+<tr><td><code>PosScreen</code></td><td><code>mobile/.../pos/ui/PosScreen.kt</code></td><td>The three-step sale UI: <strong>Sell</strong> (category chips, amount keypad), <strong>Cart</strong> (line items with subtotal/total), <strong>Payment</strong> (amount due, quick-cash chips, cash keypad, change due). <code>ReceiptDialog</code> shows the digital receipt (FR-010).</td></tr>
 <tr><td><code>PosViewModel</code></td><td><code>mobile/.../pos/viewmodel/PosViewModel.kt</code></td><td>Holds the same state as the web page (<code>categories</code>, <code>priceInput</code>, <code>quantity</code>, <code>cart</code> of <code>CartLine</code>, <code>payment</code>). <code>addToCart()</code> mirrors FR-007 validation; <code>canCheckout</code> enforces BR-002/BR-003 before enabling checkout; <code>checkout()</code> calls the repository and exposes the returned <code>SaleResponse</code>.</td></tr>
 <tr><td><code>PosRepository</code> / <code>ApiService</code></td><td><code>mobile/.../pos/data/PosRepository.kt</code>, <code>mobile/.../core/network/ApiService.kt</code></td><td>Retrofit call to <code>POST /api/sales</code>.</td></tr>
 <tr><td><code>AuthInterceptor</code></td><td><code>mobile/.../core/network/AuthInterceptor.kt</code></td><td>Attaches the JWT to every request (BR-001).</td></tr>
@@ -144,7 +144,7 @@ Sale appears in Sales History &amp; Dashboard on web and mobile within 5 s (FR-0
 
 <h3>5.4 How data is validated, processed, stored, and displayed</h3>
 <ul>
-<li><strong>Validated (two layers).</strong> The clients pre-validate for a smooth UX (a line needs a category, a price &gt; 0, and quantity ≥ 1; checkout is disabled until the cart is non-empty and <code>payment ≥ total</code>). The <strong>server re-validates</strong> authoritatively with Bean Validation (<code>@Valid</code>, <code>@NotEmpty</code>, <code>@Min(1)</code>, <code>@DecimalMin</code>) plus the explicit <code>payment ≥ total</code> check — so a malformed or malicious request is rejected regardless of the client (NFR-011).</li>
+<li><strong>Validated (two layers).</strong> The clients pre-validate for a smooth UX (a line needs a category, and a price &gt; 0; checkout is disabled until the cart is non-empty and <code>payment ≥ total</code>). The <strong>server re-validates</strong> authoritatively with Bean Validation (<code>@Valid</code>, <code>@NotEmpty</code>, <code>@Min(1)</code>, <code>@DecimalMin</code>) plus the explicit <code>payment ≥ total</code> check — so a malformed or malicious request is rejected regardless of the client (NFR-011).</li>
 <li><strong>Processed.</strong> All money is handled as <code>BigDecimal</code> at scale 2 (BR-007). The server <strong>recomputes</strong> <code>subtotal</code>, <code>total</code>, and <code>change</code> and never trusts client-sent totals (FR-008/009).</li>
 <li><strong>Stored.</strong> <code>SaleService.createSale()</code> runs in one <code>@Transactional</code> unit; JPA cascades the <code>Sale</code> and its <code>SaleItem</code>s into the <code>sales</code> and <code>sale_items</code> tables in the shared Supabase (PostgreSQL) database (FR-011). There is no update/delete endpoint, so a saved sale is immutable (BR-008).</li>
 <li><strong>Displayed.</strong> The server returns a <code>SaleResponse</code>, which the client renders as a digital receipt (FR-010). The same records are read back by Sales History (<code>GET /api/sales</code>) and the Dashboard (<code>GET /api/sales/summary</code>); both clients poll every 5 s, satisfying the cross-platform sync window (FR-016).</li>
@@ -166,12 +166,28 @@ Sale appears in Sales History &amp; Dashboard on web and mobile within 5 s (FR-0
 <tr><td>Mobile theme + login redesign</td><td>Teal/amber theme and login screen on Android</td><td><a href="https://github.com/chieeng/SouvenirPOS/commit/f6bb9c8">f6bb9c8</a></td></tr>
 <tr><td>Mobile POS flow rebuild</td><td>Sell → Cart → Payment flow with bottom navigation</td><td><a href="https://github.com/chieeng/SouvenirPOS/commit/1a9dec1">1a9dec1</a></td></tr>
 <tr><td><strong>SRS compliance — restore quantity</strong></td><td>Restore per-line quantity input to match FR-007 / BR-002 / ERD</td><td><a href="https://github.com/chieeng/SouvenirPOS/commit/181c6aa">181c6aa</a></td></tr>
+<tr><td><strong>Drop quantity from the sale model</strong></td><td>Remove per-line quantity end to end; one item per line (see §7)</td><td><em>pending commit</em></td></tr>
 </tbody>
 </table>
 <blockquote>Full history: <code>git log --oneline</code> or the repository's <a href="https://github.com/chieeng/SouvenirPOS/commits/main">commits page</a>.</blockquote>
 
 <h2>7. Traceability Note (SRS alignment)</h2>
-<p>The implemented Process Sale feature is consistent with SRS v2.0: FR-005 through FR-011 are all realized, the server enforces BR-001–BR-008, and the ERD (<code>User → Sale → SaleItem → Category</code>) is mirrored one-to-one by the JPA entities. During the UI redesign the per-line <strong>quantity</strong> input was briefly removed; because FR-007, BR-002, the Activity and Sequence diagrams, and <code>SaleItem.quantity</code> in the ERD all require it, the quantity control was restored on both clients (commit <code>181c6aa</code>) so the running system matches the SRS.</p>
+<p>The implemented Process Sale feature realizes FR-005 through FR-011, the server enforces BR-001–BR-008, and the ERD (<code>User → Sale → SaleItem → Category</code>) is mirrored one-to-one by the JPA entities.</p>
+
+<p><strong>Deviation from SRS v2.0 — per-line quantity removed.</strong> SRS v2.0 specifies a per-line quantity: FR-007 requires <code>quantity ≥ 1</code>, BR-002 references it, the Activity and Sequence diagrams show an "enter quantity" step, and the ERD carries <code>SaleItem.quantity</code>. The running system no longer has it. A sale line is now exactly one item — the cashier picks a category and types that item's price — so a line's subtotal is simply its <code>unitPrice</code>, and two of the same souvenir are rung up as two lines.</p>
+
+<p>This was a deliberate product decision: for a souvenir stall where each piece is priced individually at the counter, a quantity stepper is a step the cashier almost never needs. Note that the same removal was attempted once during the UI redesign and reverted for SRS compliance (commit <code>181c6aa</code>); this time the change was carried through every layer rather than left as a client-only divergence.</p>
+
+<p>Affected artifacts, all updated to match:</p>
+<table>
+<tr><th>Layer</th><th>Change</th></tr>
+<tr><td>ERD / schema</td><td><code>SaleItem.quantity</code> dropped; <code>sale_items.quantity</code> removed by <code>V2__drop_sale_item_quantity.sql</code></td></tr>
+<tr><td>Backend</td><td><code>SaleItemRequest.quantity</code> and its <code>@Min(1)</code> gone; <code>SaleService</code> sets <code>subtotal = unitPrice</code>; <code>SaleItemResponse.quantity</code> gone</td></tr>
+<tr><td>Web</td><td>Quantity stepper removed from the POS page; Qty column removed from sales history</td></tr>
+<tr><td>Mobile</td><td>Quantity stepper removed from the Sell and Cart steps; <code>CartLine.quantity</code> gone</td></tr>
+</table>
+
+<p><strong>Still outstanding:</strong> FR-007, BR-002, and the Activity/Sequence diagrams in the SRS document itself still describe quantity and must be revised for the SRS and the running system to agree. Historical <code>sale_items</code> rows keep their recorded <code>subtotal</code> and their sale totals, so past sales remain financially correct, but the per-line item count for rows written before this change is not recoverable.</p>
 
 </body>
 </html>

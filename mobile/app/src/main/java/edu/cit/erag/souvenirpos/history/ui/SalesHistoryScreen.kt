@@ -261,7 +261,7 @@ private fun ReceiptDialog(sale: SaleResponse, onDismiss: () -> Unit) {
                             .padding(vertical = 2.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Text("${item.categoryName}  ${peso(item.unitPrice)} x${item.quantity}")
+                        Text("${item.categoryName}  ${peso(item.unitPrice)}")
                         Text(peso(item.subtotal))
                     }
                 }

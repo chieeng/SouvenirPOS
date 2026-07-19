@@ -28,9 +28,7 @@ function formatTime(iso) {
 }
 
 function itemSummary(items) {
-  const names = items.map((it) =>
-    it.quantity > 1 ? `${it.categoryName} ×${it.quantity}` : it.categoryName,
-  )
+  const names = items.map((it) => it.categoryName)
   const shown = names.slice(0, 3).join(', ')
   return names.length > 3 ? `${shown} +${names.length - 3}` : shown
 }
@@ -74,10 +72,7 @@ export default function SalesHistoryPage() {
   }, [from, to])
 
   const totalSales = sales.reduce((sum, s) => sum + Number(s.totalAmount), 0)
-  const itemsSold = sales.reduce(
-    (sum, s) => sum + s.items.reduce((n, it) => n + it.quantity, 0),
-    0,
-  )
+  const itemsSold = sales.reduce((sum, s) => sum + s.items.length, 0)
   const avgBasket = sales.length > 0 ? totalSales / sales.length : 0
 
   const filterTools = (
@@ -156,7 +151,7 @@ export default function SalesHistoryPage() {
           <span>Order</span>
           <span>Time</span>
           <span>Items</span>
-          <span className="hist-center">Qty</span>
+          <span className="hist-center">Items</span>
           <span>Cashier</span>
           <span className="hist-right">Total</span>
           <span className="hist-right">Status</span>
@@ -167,13 +162,13 @@ export default function SalesHistoryPage() {
         )}
 
         {sales.map((sale) => {
-          const qty = sale.items.reduce((n, it) => n + it.quantity, 0)
+          const itemCount = sale.items.length
           return (
             <button key={sale.id} className="hist-row hist-data" onClick={() => setSelected(sale)}>
               <span className="hist-order">#{sale.id}</span>
               <span className="hist-muted">{formatTime(sale.saleDateTime)}</span>
               <span className="hist-items">{itemSummary(sale.items)}</span>
-              <span className="hist-center hist-muted">{qty}</span>
+              <span className="hist-center hist-muted">{itemCount}</span>
               <span className="hist-cashier">
                 <span className="hist-cashier-avatar">{initialsOf(sale.cashierName)}</span>
                 <span className="hist-cashier-name">{sale.cashierName}</span>
@@ -208,7 +203,6 @@ export default function SalesHistoryPage() {
               <thead>
                 <tr>
                   <th>Category</th>
-                  <th className="num">Qty</th>
                   <th className="num">Unit</th>
                   <th className="num">Subtotal</th>
                 </tr>
@@ -217,7 +211,6 @@ export default function SalesHistoryPage() {
                 {selected.items.map((it) => (
                   <tr key={it.id}>
                     <td>{it.categoryName}</td>
-                    <td className="num">{it.quantity}</td>
                     <td className="num">{formatPeso(it.unitPrice)}</td>
                     <td className="num">{formatPeso(it.subtotal)}</td>
                   </tr>

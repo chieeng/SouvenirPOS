@@ -180,7 +180,6 @@ identical to a generated project.
 |---|---|
 | `category` | which category chip is currently selected (defaults to the first one) |
 | `priceInput` | the price being typed via the numpad, as a *string* (not a number yet) |
-| `quantity` | quantity for the item currently being built, min 1 |
 | `cart` | the array of line items already added — this is the actual "sale in progress" |
 | `payment` | cash tendered, as a sanitized string |
 | `completedMessage` | success banner text shown briefly after checkout |
@@ -203,17 +202,14 @@ a numeric keyboard on mobile) and manually sanitize the input with a regex —
 check collapses multiple dots into one (so `"12.3.4"` typed quickly becomes `"12.34"`
 rather than something `parseFloat` would choke on).
 
-**`adjustQuantity(delta)`:** the entire quantity stepper. `Math.max(1, prev + delta)`
-is doing double duty — it both increments/decrements *and* enforces the floor of 1 in
-the same expression, so quantity can never go to 0 or negative via the buttons.
-
-**`handleAddToCart`:** validates `price > 0` and `quantity >= 1` (guards against the
+**`handleAddToCart`:** validates `price > 0` (guards against the
 Add button being tapped with an empty/zero price), then pushes a new object onto
 `cart` using the spread pattern (`[...prev, newLine]`) — this is the standard
 React-safe way to update array state immutably, which is what lets React detect the
 change and re-render.
 
-**`total` via `useMemo`:** `cart.reduce((sum, line) => sum + line.price * line.quantity, 0)`,
+**`total` via `useMemo`:** `cart.reduce((sum, line) => sum + line.price, 0)` — each line
+is a single item, so there is nothing to multiply —
 recomputed only when `cart` changes (not on every keystroke in the price/payment
 fields) — a small performance optimization, not strictly necessary at this scale but
 good practice.

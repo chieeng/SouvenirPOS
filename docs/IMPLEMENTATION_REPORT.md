@@ -18,7 +18,7 @@ use case in the SRS Use Case model, which *includes* "Generate Receipt"), and ev
 feature exists to support it: authentication protects it, category management feeds it,
 and sales history and the dashboard read back what it produces.
 
-The feature lets a cashier build a sale from one or more **category + price + quantity**
+The feature lets a cashier build a sale from one or more **category + price**
 lines, enter the customer's **cash payment**, and complete the transaction. The backend —
 the single source of truth — **recomputes** every monetary value, **validates** the
 business rules, **persists** the sale immutably to the shared Supabase database, and
@@ -39,7 +39,7 @@ during tour-bus rushes.
 |----|-------------|----------------------|
 | **FR-005** | Select Sale Category | Cashier picks a category from the owner-managed list for each line |
 | **FR-006** | Create Sale Transaction | A new sale is opened, tied to the logged-in cashier and current date/time |
-| **FR-007** | Add Items to Sale | One or more lines, each = category + manually entered price + quantity ≥ 1 |
+| **FR-007** | Add Items to Sale | One or more lines, each = category + manually entered price (one item per line) |
 | **FR-008** | Compute Sale Totals | Server computes each line subtotal and the sale total |
 | **FR-009** | Record Payment & Compute Change | Server accepts cash tendered and computes change due |
 | **FR-010** | Generate Digital Receipt | Completed sale is returned and shown as a receipt |
@@ -59,7 +59,7 @@ line), BR-007 (peso, 2 decimals), BR-008 (saved sale is immutable).
 Login (JWT)
    │
    ▼
-Open new sale ──▶ [ Select category → enter price → enter quantity → Add line ] ◀─┐
+Open new sale ──▶ [ Select category → enter price → Add line ] ◀─┐
    │                                                                              │
    │                                   more items? ───────────────────────────────┘
    ▼
@@ -89,15 +89,15 @@ Sale appears in Sales History & Dashboard on web and mobile within 5 s (FR-016)
 |---|-------------|--------------------------|--------------------|--------------------|-----------------|
 | 1 | Cashier logs in | Stores JWT; opens POS screen | `POST /api/auth/login` verifies password hash, issues JWT | `SELECT` user by username | POS screen ready, categories loaded |
 | 2 | Selects a category | Highlights the chosen category chip | `GET /api/categories` (on load) | `SELECT` all categories | Owner-managed category list shown (FR-005) |
-| 3 | Types a price on the keypad, sets quantity, taps **Add to sale** | Adds a line to the cart; running total updates | — (held in client state until checkout) | — | Cart line: category, price, qty, subtotal (FR-007) |
+| 3 | Types a price on the keypad, taps **Add to sale** | Adds a line to the cart; running total updates | — (held in client state until checkout) | — | Cart line: category, price, subtotal (FR-007) |
 | 4 | Repeats step 3 for more items | Cart grows; total recalculated for display | — | — | Multi-line cart with live total (FR-008) |
 | 5 | Enters cash tendered, taps **Checkout / Complete sale** | Sends `POST /api/sales` with items + payment + `Authorization: Bearer <JWT>` | `JwtAuthFilter` validates token → `SaleService.createSale()` | — | Request accepted for processing |
-| 6 | (waits) | Shows spinner | Resolve current cashier (BR-004); `@Valid` checks BR-002 & price/qty; recompute `subtotal = unitPrice × quantity`, sum `total`; enforce `payment ≥ total` (BR-003); `change = payment − total` (FR-009) | `SELECT` category by id (per line) | Server-computed, trustworthy totals |
+| 6 | (waits) | Shows spinner | Resolve current cashier (BR-004); `@Valid` checks BR-002 & price; take `subtotal = unitPrice` per line, sum `total`; enforce `payment ≥ total` (BR-003); `change = payment − total` (FR-009) | `SELECT` category by id (per line) | Server-computed, trustworthy totals |
 | 7 | (waits) | — | Persist the sale graph in one transaction | `INSERT` into `sales` + cascade `INSERT` into `sale_items` | Sale saved with generated id (FR-011) |
-| 8 | Sees confirmation | Renders the **digital receipt** (items, qty, price, total, payment, change) | Returns `201 Created` + `SaleResponse` | — | Digital receipt displayed (FR-010) |
+| 8 | Sees confirmation | Renders the **digital receipt** (items, price, total, payment, change) | Returns `201 Created` + `SaleResponse` | — | Digital receipt displayed (FR-010) |
 | 9 | Owner opens Dashboard / History (any device) | Auto-refreshing views poll the API | `GET /api/sales`, `GET /api/sales/summary` | `SELECT` sales (optionally by date) | New sale visible within 5 s (FR-012/015/016) |
 
-**Error paths:** invalid/expired JWT → `401`; empty cart or bad price/quantity → `400`
+**Error paths:** invalid/expired JWT → `401`; empty cart or bad price → `400`
 with a validation message; `payment < total` → `400 "Payment amount must be greater than
 or equal to the total"`; unknown category → `400 "Category not found"`. The client shows
 the returned message and the sale is **not** saved.
@@ -111,12 +111,12 @@ the returned message and the sale is **not** saved.
 | Component | File | Responsibility |
 |-----------|------|----------------|
 | `SaleController` | `backend/.../sale/controller/SaleController.java` | REST endpoints under `/api/sales`. `createSale()` handles `POST` (`@Valid @RequestBody`, returns `201 Created`); also `GET` list (FR-012, with optional `?date`), `GET /summary` (FR-015), `GET /{id}` (FR-014). |
-| `SaleService` | `backend/.../sale/service/SaleService.java` | The heart of the feature. `createSale()` is `@Transactional`: resolves the authenticated cashier (`currentUser()`, BR-004), loops the lines, looks up each `Category`, computes `subtotal = unitPrice × quantity` and the running `total` with `BigDecimal` (FR-008, BR-007), enforces `payment ≥ total` (BR-003), sets `change = payment − total` (FR-009), and saves. |
+| `SaleService` | `backend/.../sale/service/SaleService.java` | The heart of the feature. `createSale()` is `@Transactional`: resolves the authenticated cashier (`currentUser()`, BR-004), loops the lines, looks up each `Category`, takes each line's `subtotal` as its `unitPrice` and computes the running `total` with `BigDecimal` (FR-008, BR-007), enforces `payment ≥ total` (BR-003), sets `change = payment − total` (FR-009), and saves. |
 | `Sale` (entity) | `backend/.../shared/domain/Sale.java` | JPA `@Entity` → `sales` table. Holds `saleDateTime`, `cashier` (`@ManyToOne`, not null — BR-004), `totalAmount`, `paymentAmount`, `changeAmount`, and a cascaded `@OneToMany` list of `SaleItem`. `addItem()` keeps both sides of the relationship in sync. |
-| `SaleItem` (entity) | `backend/.../shared/domain/SaleItem.java` | JPA `@Entity` → `sale_items` table. Holds `category`, `quantity`, `unitPrice` (BR-005 — the price entered at sale time), and `subtotal`, all `precision=12, scale=2` (BR-007). |
+| `SaleItem` (entity) | `backend/.../shared/domain/SaleItem.java` | JPA `@Entity` → `sale_items` table. Holds `category`, `unitPrice` (BR-005 — the price entered at sale time), and `subtotal`, all `precision=12, scale=2` (BR-007). |
 | `SaleRepository` | `backend/.../sale/repository/SaleRepository.java` | Spring Data JPA repository; derived queries for date-range and ordered listing. |
 | `SaleCreateRequest` | `backend/.../sale/dto/SaleCreateRequest.java` | Request DTO. `@NotEmpty` on `items` enforces **BR-002** (≥1 line); `@NotNull paymentAmount`; `@Valid` cascades to each line. |
-| `SaleItemRequest` | `backend/.../sale/dto/SaleItemRequest.java` | Per-line DTO. `@NotNull categoryId`, `@Min(1) quantity` (**FR-007**), `@DecimalMin("0.01") unitPrice` (price > 0). |
+| `SaleItemRequest` | `backend/.../sale/dto/SaleItemRequest.java` | Per-line DTO. `@NotNull categoryId` and `@DecimalMin("0.01") unitPrice` (price > 0, **FR-007**). |
 | `SaleResponse` / `SaleItemResponse` | `backend/.../sale/dto/` | Response DTOs used to build the digital receipt payload (FR-010). |
 | `GlobalExceptionHandler` | `backend/.../shared/exception/GlobalExceptionHandler.java` | `@RestControllerAdvice`: validation errors → `400` (field → message); `IllegalArgumentException` (payment < total, category not found) → `400`; bad credentials → `401`; access denied → `403`. |
 | `JwtAuthFilter` / `JwtService` / `SecurityConfig` | `backend/.../shared/security/` | Enforce **BR-001 / NFR-004**: every `/api/**` call (except login) requires a valid JWT; the filter validates the token and puts the user in the `SecurityContext` so `SaleService` can attribute the sale. |
@@ -125,7 +125,7 @@ the returned message and the sale is **not** saved.
 
 | Component | File | Responsibility |
 |-----------|------|----------------|
-| `POSPage` | `web/src/pos/components/POSPage.jsx` | The sale screen. React state holds `categories`, selected `category`, keypad `priceInput`, `quantity`, `cart`, and `payment`. `handleAddToCart()` validates category + price > 0 + quantity ≥ 1 and appends a line; `handleCheckout()` builds the request and `POST`s `/sales`, then stores the returned sale as `receipt` for the receipt modal (FR-010). Totals/change are computed client-side **for display only**. |
+| `POSPage` | `web/src/pos/components/POSPage.jsx` | The sale screen. React state holds `categories`, selected `category`, keypad `priceInput`, `cart`, and `payment`. `handleAddToCart()` validates category + price > 0 and appends a single-item line; `handleCheckout()` builds the request and `POST`s `/sales`, then stores the returned sale as `receipt` for the receipt modal (FR-010). Totals/change are computed client-side **for display only**. |
 | `client` (Axios) | `web/src/shared/api/client.js` | `baseURL: '/api'` + a request interceptor that attaches `Authorization: Bearer <token>` (BR-001). |
 | `AuthContext` | `web/src/auth/context/AuthContext.jsx` | Stores the JWT and user after login and exposes it to the POS. |
 
@@ -133,15 +133,15 @@ the returned message and the sale is **not** saved.
 
 | Component | File | Responsibility |
 |-----------|------|----------------|
-| `PosScreen` | `mobile/.../pos/ui/PosScreen.kt` | The three-step sale UI: **Sell** (category chips, amount keypad, quantity stepper), **Cart** (line items with per-line quantity steppers, subtotal/total), **Payment** (amount due, quick-cash chips, cash keypad, change due). `ReceiptDialog` shows the digital receipt (FR-010). |
-| `PosViewModel` | `mobile/.../pos/viewmodel/PosViewModel.kt` | Holds the same state as the web page (`categories`, `priceInput`, `quantity`, `cart` of `CartLine`, `payment`). `addToCart()` mirrors FR-007 validation; `canCheckout` enforces BR-002/BR-003 before enabling checkout; `checkout()` calls the repository and exposes the returned `SaleResponse`. |
+| `PosScreen` | `mobile/.../pos/ui/PosScreen.kt` | The three-step sale UI: **Sell** (category chips, amount keypad), **Cart** (line items with subtotal/total), **Payment** (amount due, quick-cash chips, cash keypad, change due). `ReceiptDialog` shows the digital receipt (FR-010). |
+| `PosViewModel` | `mobile/.../pos/viewmodel/PosViewModel.kt` | Holds the same state as the web page (`categories`, `priceInput`, `cart` of `CartLine`, `payment`). `addToCart()` mirrors FR-007 validation; `canCheckout` enforces BR-002/BR-003 before enabling checkout; `checkout()` calls the repository and exposes the returned `SaleResponse`. |
 | `PosRepository` / `ApiService` | `mobile/.../pos/data/PosRepository.kt`, `mobile/.../core/network/ApiService.kt` | Retrofit call to `POST /api/sales`. |
 | `AuthInterceptor` | `mobile/.../core/network/AuthInterceptor.kt` | Attaches the JWT to every request (BR-001). |
 
 ### 5.4 How data is validated, processed, stored, and displayed
 
 - **Validated (two layers).** The clients pre-validate for a smooth UX (a line needs a
-  category, a price > 0, and quantity ≥ 1; checkout is disabled until the cart is
+  category, and a price > 0; checkout is disabled until the cart is
   non-empty and `payment ≥ total`). The **server re-validates** authoritatively with Bean
   Validation (`@Valid`, `@NotEmpty`, `@Min(1)`, `@DecimalMin`) plus the explicit
   `payment ≥ total` check — so a malformed or malicious request is rejected regardless of
@@ -178,6 +178,7 @@ Each major task / functional requirement has its own commit. Links use the repos
 | Mobile theme + login redesign | Teal/amber theme and login screen on Android | [`f6bb9c8`](https://github.com/chieeng/SouvenirPOS/commit/f6bb9c8) |
 | Mobile POS flow rebuild | Sell → Cart → Payment flow with bottom navigation | [`1a9dec1`](https://github.com/chieeng/SouvenirPOS/commit/1a9dec1) |
 | **SRS compliance — restore quantity** | Restore per-line quantity input to match FR-007 / BR-002 / ERD | [`181c6aa`](https://github.com/chieeng/SouvenirPOS/commit/181c6aa) |
+| **Drop quantity from the sale model** | Remove per-line quantity end to end; one item per line (see §7) | _pending commit_ |
 
 > Full history: `git log --oneline` or the repository's
 > [commits page](https://github.com/chieeng/SouvenirPOS/commits/main).
@@ -186,9 +187,34 @@ Each major task / functional requirement has its own commit. Links use the repos
 
 ## 7. Traceability Note (SRS alignment)
 
-The implemented Process Sale feature is consistent with SRS v2.0: FR-005 through FR-011
-are all realized, the server enforces BR-001–BR-008, and the ERD (`User → Sale → SaleItem
-→ Category`) is mirrored one-to-one by the JPA entities. During the UI redesign the
-per-line **quantity** input was briefly removed; because FR-007, BR-002, the Activity and
-Sequence diagrams, and `SaleItem.quantity` in the ERD all require it, the quantity control
-was restored on both clients (commit `181c6aa`) so the running system matches the SRS.
+The implemented Process Sale feature realizes FR-005 through FR-011, the server enforces
+BR-001–BR-008, and the ERD (`User → Sale → SaleItem → Category`) is mirrored one-to-one by
+the JPA entities.
+
+**Deviation from SRS v2.0 — per-line quantity removed.** SRS v2.0 specifies a per-line
+quantity: FR-007 requires `quantity ≥ 1`, BR-002 references it, the Activity and Sequence
+diagrams show an "enter quantity" step, and the ERD carries `SaleItem.quantity`. The
+running system no longer has it. A sale line is now exactly one item — the cashier picks a
+category and types that item's price — so a line's subtotal is simply its `unitPrice`, and
+two of the same souvenir are rung up as two lines.
+
+This was a deliberate product decision: for a souvenir stall where each piece is priced
+individually at the counter, a quantity stepper is a step the cashier almost never needs.
+Note that the same removal was attempted once during the UI redesign and reverted for SRS
+compliance (commit `181c6aa`); this time the change was carried through every layer rather
+than left as a client-only divergence.
+
+Affected artifacts, all updated to match:
+
+| Layer | Change |
+|---|---|
+| ERD / schema | `SaleItem.quantity` dropped; `sale_items.quantity` removed by `V2__drop_sale_item_quantity.sql` |
+| Backend | `SaleItemRequest.quantity` and its `@Min(1)` gone; `SaleService` sets `subtotal = unitPrice`; `SaleItemResponse.quantity` gone |
+| Web | Quantity stepper removed from the POS page; Qty column removed from sales history |
+| Mobile | Quantity stepper removed from the Sell and Cart steps; `CartLine.quantity` gone |
+
+**Still outstanding:** FR-007, BR-002, and the Activity/Sequence diagrams in the SRS
+document itself still describe quantity and must be revised for the SRS and the running
+system to agree. Historical `sale_items` rows keep their recorded `subtotal` and their
+sale totals, so past sales remain financially correct, but the per-line item count for
+rows written before this change is not recoverable.

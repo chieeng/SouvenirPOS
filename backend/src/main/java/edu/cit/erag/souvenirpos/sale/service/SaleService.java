@@ -54,11 +54,12 @@ public class SaleService {
                     .orElseThrow(() -> new IllegalArgumentException("Category not found: " + line.getCategoryId()));
 
             // FR-008: subtotals and total are computed on the server, never trusted from the client.
+            // Each line is a single item, so its subtotal is just the price entered for it.
             BigDecimal unitPrice = line.getUnitPrice();
-            BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(line.getQuantity()));
+            BigDecimal subtotal = unitPrice;
             total = total.add(subtotal);
 
-            sale.addItem(new SaleItem(category, line.getQuantity(), unitPrice, subtotal));
+            sale.addItem(new SaleItem(category, unitPrice, subtotal));
         }
 
         // BR-003: payment must be at least the total.

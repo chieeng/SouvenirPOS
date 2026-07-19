@@ -39,36 +39,34 @@
   letter-spacing: 0.06em;
 }
 
-.category-chips {
-  display: flex;
-  gap: 9px;
+.category-select {
+  width: 100%;
   margin-top: 10px;
-  flex-wrap: wrap;
-}
-.category-hint {
-  color: var(--faint);
-  font-size: 13px;
-}
-.chip {
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 13px 40px 13px 16px;
+  border-radius: 13px;
   background: var(--paper);
   border: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 13px;
+  color: var(--text);
+  font-size: 15px;
   font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  transition: border-color 0.15s;
 }
-.chip:hover {
+.category-select:hover:not(:disabled) {
   border-color: var(--faint);
 }
-.chip-active,
-.chip-active:hover {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: #fff;
-  font-weight: 600;
+.category-select:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.category-select:disabled {
+  color: var(--faint);
+  cursor: default;
 }
 
 .price-panel {
@@ -130,42 +128,6 @@
 }
 .numpad-del {
   color: var(--red) !important;
-}
-
-.quantity-row {
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-  color: var(--muted);
-  flex: none;
-}
-.quantity-stepper {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.quantity-stepper button {
-  width: 44px;
-  height: 44px;
-  border-radius: 11px;
-  border: 1px solid var(--line);
-  background: var(--paper);
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  color: var(--text);
-}
-.quantity-stepper button:hover {
-  background: var(--sand);
-}
-.quantity-value {
-  min-width: 2ch;
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
 }
 
 .pos-add-btn {

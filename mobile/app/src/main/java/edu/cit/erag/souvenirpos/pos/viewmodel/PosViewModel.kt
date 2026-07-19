@@ -17,9 +17,9 @@ data class CartLine(
     val id: Long,
     val category: Category,
     val unitPrice: Double,
-    val quantity: Int,
 ) {
-    val subtotal: Double get() = unitPrice * quantity
+    // Each line is a single item, so its subtotal is just the price entered for it.
+    val subtotal: Double get() = unitPrice
 }
 
 class PosViewModel : ViewModel() {
@@ -31,8 +31,6 @@ class PosViewModel : ViewModel() {
     var selectedCategory by mutableStateOf<Category?>(null)
         private set
     var priceInput by mutableStateOf("")
-        private set
-    var quantity by mutableStateOf(1)
         private set
     var cart by mutableStateOf<List<CartLine>>(emptyList())
         private set
@@ -97,41 +95,21 @@ class PosViewModel : ViewModel() {
         payment = if (parts.size > 2) parts[0] + "." + parts.drop(1).joinToString("") else cleaned
     }
 
-    fun incQuantity() {
-        quantity += 1
-    }
-
-    fun decQuantity() {
-        if (quantity > 1) quantity -= 1
-    }
-
     fun addToCart() {
         val price = priceInput.toDoubleOrNull()
         val category = selectedCategory
-        // FR-007: a sale line needs a category, a manually entered price, and quantity >= 1.
-        if (category == null || price == null || price <= 0.0 || quantity < 1) {
+        // FR-007: a sale line needs a category and a manually entered price; each line is one item.
+        if (category == null || price == null || price <= 0.0) {
             error = "Pick a category and enter a valid price"
             return
         }
-        cart = cart + CartLine(System.nanoTime(), category, price, quantity)
+        cart = cart + CartLine(System.nanoTime(), category, price)
         priceInput = ""
-        quantity = 1
         error = null
     }
 
     fun removeLine(id: Long) {
         cart = cart.filterNot { it.id == id }
-    }
-
-    /** Cart-screen quantity steppers (− n + per line). */
-    fun incLine(id: Long) {
-        cart = cart.map { if (it.id == id) it.copy(quantity = it.quantity + 1) else it }
-    }
-
-    fun decLine(id: Long) {
-        cart = cart.map {
-            if (it.id == id && it.quantity > 1) it.copy(quantity = it.quantity - 1) else it
-        }
     }
 
     /** On-screen keypad for the cash-payment step. */
@@ -155,7 +133,7 @@ class PosViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val request = SaleCreateRequest(
-                    items = cart.map { SaleLineRequest(it.category.id, it.quantity, it.unitPrice) },
+                    items = cart.map { SaleLineRequest(it.category.id, it.unitPrice) },
                     paymentAmount = paymentAmount,
                 )
                 receipt = repo.createSale(request)
